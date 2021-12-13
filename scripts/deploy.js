@@ -12,20 +12,20 @@ async function main() {
 
   // MARK: - Deploy test token (only for testnet)
   const testToken = await hre.ethers.getContractFactory('ERC20PresetMinterPauser');
-  const token = await testToken.deploy('Test Pixel', 'TEST_PIXEL');
+  const token = await testToken.deploy('Test Dixel', 'TEST_DX');
   await token.deployed();
   await token.mint(deployer, '10000000000000000000000'); // 10,000 tokens
 
   console.log(`Test token is deployed at ${token.address}`);
 
   // MARK: - Deploy contract
-  const Pixel = await hre.ethers.getContractFactory('Pixel');
-  const pixel = await Pixel.deploy(token.address);
+  const Dixel = await hre.ethers.getContractFactory('Dixel');
+  const pixel = await Dixel.deploy(token.address);
   await pixel.deployed();
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
-  console.log(`- Pixel contract: ${pixel.address}`);
+  console.log(`- Dixel contract: ${pixel.address}`);
 };
 
 main()

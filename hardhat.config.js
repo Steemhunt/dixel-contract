@@ -36,20 +36,20 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      blockGasLimit: 8000000,
+      blockGasLimit: 60000000,
     },
     bsctest: {
       url: `https://data-seed-prebsc-1-s2.binance.org:8545/`,
       chainId: 97,
-      gasPrice: 50000000000, // 10 GWei
-      blockGasLimit: 30000000,
+      gasPrice: 6000000000, // 6 GWei
+      blockGasLimit: 60000000, // 60M
       accounts: [process.env.BSC_TEST_PRIVATE_KEY]
     },
     bscmain: {
       url: `https://bsc-dataseed.binance.org`,
       chainId: 56,
       gasPrice: 6000000000, // 6 GWei
-      blockGasLimit: 60000000, // 6 Gwei
+      blockGasLimit: 60000000, // 60M
       accounts: [process.env.BSC_PRIVATE_KEY]
     }
   },

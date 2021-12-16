@@ -20,12 +20,12 @@ async function main() {
 
   // MARK: - Deploy contract
   const Dixel = await hre.ethers.getContractFactory('Dixel');
-  const pixel = await Dixel.deploy(token.address);
-  await pixel.deployed();
+  const dixel = await Dixel.deploy(token.address);
+  await dixel.deployed();
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
-  console.log(`- Dixel contract: ${pixel.address}`);
+  console.log(`- Dixel contract: ${dixel.address}`);
 };
 
 main()
@@ -34,3 +34,6 @@ main()
     console.error(error);
     process.exit(1);
   });
+
+// npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
+// npx hardhat verify --network bsctest 0x8476E06ff92f99CB39c0e4C9Fc88c754c84d6177 '0x0DeC4035660f146f6c360fa0f4430b379A690213'

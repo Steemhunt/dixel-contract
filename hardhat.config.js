@@ -41,7 +41,7 @@ module.exports = {
     bsctest: {
       url: `https://data-seed-prebsc-1-s2.binance.org:8545/`,
       chainId: 97,
-      gasPrice: 6000000000, // 6 GWei
+      gasPrice: 10000000000, // 10 GWei
       blockGasLimit: 60000000, // 60M
       accounts: [process.env.BSC_TEST_PRIVATE_KEY]
     },

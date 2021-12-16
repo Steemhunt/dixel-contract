@@ -6,6 +6,12 @@ Crowd-sourced pixel art community
 npx hardhat test
 ```
 
+## Contracts
+
+### BSC Testnet
+- Test token: 0x29F750BD6854B43CB1eeF857452ddC29B9c6C5B5
+- Dixel contract: [0xfF202bfD9fd0E5817e7236215B4589b203a3Fcd7](https://testnet.bscscan.com/address/0xfF202bfD9fd0E5817e7236215B4589b203a3Fcd7#code)
+
 ## Deploy
 ```bash
 npx hardhat compile

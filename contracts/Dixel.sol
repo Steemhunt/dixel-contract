@@ -15,11 +15,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract Dixel is Ownable, ReentrancyGuard {
     IERC20 public baseToken;
 
-    uint16 public constant CANVAS_SIZE = 16; // 16 x 16 pixels
-    uint200 public constant GENESIS_PRICE = 1e18; // Initial price: 1 DX
-    uint16 public constant PRICE_INCREASE_RATE = 500;
-    // uint16 public constant BURN_RATE = 100; // NOTE: Remove for gas savings
-    uint16 public constant MAX_RATE = 10000;
+    uint16 private constant CANVAS_SIZE = 16; // 16 x 16 pixels
+    uint200 private constant GENESIS_PRICE = 1e18; // Initial price: 1 DX
+    uint16 private constant PRICE_INCREASE_RATE = 500;
+    // uint16 private constant BURN_RATE = 100; // NOTE: Remove for gas savings
+    uint16 private constant MAX_RATE = 10000;
 
     struct Pixel {
         uint24 color; // 24bit integer (000000 - ffffff = 0 - 16777215)

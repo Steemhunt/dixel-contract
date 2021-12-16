@@ -15,6 +15,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract Dixel is Ownable, ReentrancyGuard {
     IERC20 public baseToken;
 
+    uint16 public constant CANVAS_SIZE = 16; // 16 x 16 pixels
     uint200 public constant GENESIS_PRICE = 1e18; // Initial price: 1 DX
     uint16 public constant PRICE_INCREASE_RATE = 500;
     // uint16 public constant BURN_RATE = 100; // NOTE: Remove for gas savings
@@ -37,18 +38,21 @@ contract Dixel is Ownable, ReentrancyGuard {
         uint24 color;
     }
 
-    Pixel[16][16] public pixels;
+    Pixel[CANVAS_SIZE][CANVAS_SIZE] public pixels;
 
     // GAS_SAVING: Store player's wallet addresses
     address[] playerWallets;
     mapping(address => Player) public players;
 
+    event UpdatePixels(address player, uint16 pixelCount, uint224 totalPrice);
+    event ClaimReward(address player, uint224 rewardAmount);
+
     constructor(address baseTokenAddress) {
         baseToken = IERC20(baseTokenAddress);
         _getOrAddPlayerId(baseTokenAddress); // players[0] = baseTokenAddress (burn)
 
-        for (uint256 i = 0; i < 16; i++) {
-            for (uint256 j = 0; j < 16; j++) {
+        for (uint256 i = 0; i < CANVAS_SIZE; i++) {
+            for (uint256 j = 0; j < CANVAS_SIZE; j++) {
                 // omit initial owner because default value 0 is correct
                 pixels[i][j].price = GENESIS_PRICE;
             }
@@ -65,6 +69,8 @@ contract Dixel is Ownable, ReentrancyGuard {
     }
 
     function updatePixels(PixelParams[] calldata params) external nonReentrant {
+        require(params.length <= CANVAS_SIZE * CANVAS_SIZE, 'TOO_MANY_PIXELS');
+
         address msgSender = _msgSender();
         uint32 owner = _getOrAddPlayerId(msgSender);
 
@@ -84,6 +90,8 @@ contract Dixel is Ownable, ReentrancyGuard {
         }
 
         require(baseToken.transferFrom(msgSender, address(this), totalPrice), 'TOKEN_TRANSFER_FAILED');
+
+        emit UpdatePixels(msgSender, uint16(params.length), totalPrice);
     }
 
     function claimReward() external {
@@ -92,6 +100,12 @@ contract Dixel is Ownable, ReentrancyGuard {
         uint224 pendingReward = players[msgSender].pendingReward;
         players[msgSender].pendingReward = 0;
         require(baseToken.transfer(msgSender, pendingReward), 'TOKEN_TRANSFER_FAILED');
+
+        emit ClaimReward(msgSender, pendingReward);
+    }
+
+    function totalPlayerCount() external view returns (uint256) {
+        return playerWallets.length;
     }
 
     function int2hex(uint24 i) external pure returns (string memory) {

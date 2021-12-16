@@ -12,7 +12,7 @@ contract('Dixel', function(accounts) {
     this.baseToken = await ERC20.new("Test Dixel", "TEST_PIXEL");
     await this.baseToken.mint(deployer, ether("10000"));
     await this.baseToken.mint(alice, ether("100"));
-    await this.baseToken.mint(bob, ether("200"));
+    await this.baseToken.mint(bob, ether("100"));
 
     this.dixel = await Dixel.new(this.baseToken.address);
   });
@@ -59,7 +59,7 @@ contract('Dixel', function(accounts) {
       expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayer.id);
     });
 
-    it("should pixels' price", async function() {
+    it("should increase pixels' price", async function() {
       expect(this.pixel1.price).to.be.bignumber.equal(ether('1.05'));
       expect(this.pixel2.price).to.be.bignumber.equal(ether('1.05'));
     });
@@ -75,6 +75,47 @@ contract('Dixel', function(accounts) {
     it("should update original owner's pending rewards", async function() {
       const originalOwner = await this.dixel.players(this.baseToken.address);
       expect(originalOwner.pendingReward).to.be.bignumber.equal(ether('2.1'));
+    });
+
+
+    describe('update again', function() {
+      beforeEach(async function() {
+        await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: bob });
+        await this.dixel.updatePixels([[1, 1, 255]], { from: bob }); // #0000ff
+
+        this.pixel1 = await this.dixel.pixels(1, 1);
+        this.bobPlayer = await this.dixel.players(bob);
+      });
+
+      it('should update pixel colors', async function() {
+        expect(this.pixel1.color).to.be.bignumber.equal('255');
+      });
+
+      it('should update owner of pixels', async function() {
+        expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayer.id);
+      });
+
+      it("should increase pixels' price", async function() {
+        expect(this.pixel1.price).to.be.bignumber.equal(ether('1.1025'));
+      });
+
+      it("should transfer tokens from bob", async function() {
+        expect(await this.baseToken.balanceOf(bob)).to.be.bignumber.equal(ether('98.8975'));
+      });
+
+      it("should transfer tokens to the contract", async function() {
+        expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(ether('3.2025'));
+      });
+
+      it("should update original owner's pending rewards", async function() {
+        const originalOwner = await this.dixel.players(alice);
+        expect(originalOwner.pendingReward).to.be.bignumber.equal(ether('1.1025'));
+      });
+
+      it("should let alice to claim rewards", async function() {
+        await this.dixel.claimReward({ from: alice });
+        expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether('99.0025')); // 97.9 + 1.1025
+      });
     });
   });
 

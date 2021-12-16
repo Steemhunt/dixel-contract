@@ -86,10 +86,12 @@ contract Dixel is Ownable, ReentrancyGuard {
         require(baseToken.transferFrom(msgSender, address(this), totalPrice), 'TOKEN_TRANSFER_FAILED');
     }
 
-    function _uint8ToHexCharCode(uint8 i) private pure returns (uint8) {
-        return (i > 9) ?
-            (i + 87) : // ascii a-f
-            (i + 48); // ascii 0-9
+    function claimReward() external {
+        address msgSender = _msgSender();
+
+        uint224 pendingReward = players[msgSender].pendingReward;
+        players[msgSender].pendingReward = 0;
+        require(baseToken.transfer(msgSender, pendingReward), 'TOKEN_TRANSFER_FAILED');
     }
 
     function int2hex(uint24 i) external pure returns (string memory) {
@@ -98,7 +100,8 @@ contract Dixel is Ownable, ReentrancyGuard {
         uint256 k = 6;
         do {
             k--;
-            o[k] = bytes1(_uint8ToHexCharCode(uint8(i & mask)));
+            uint8 masked = uint8(i & mask);
+            o[k] = bytes1((masked > 9) ? (masked + 87) : (masked + 48)); // ASCII a-f => +87 | 0-9 => +48
             i >>= 4;
         } while (k > 0);
 

@@ -144,5 +144,10 @@ contract("Dixel", function(accounts) {
       const testSVG = fs.readFileSync(`${__dirname}/fixtures/test.svg`, 'utf8');
       expect(await this.dixel.generateSVG()).to.equal(testSVG);
     });
+
+    it("should encode SVG into Base64 correctly", async function() {
+      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-base64.txt`, 'utf8');
+      expect(await this.dixel.generateBase64EncodedSVG()).to.equal(testBase64);
+    });
   });
 });

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.10;
 
-contract ColorUtils {
-    function _uint2str(uint256 i) internal pure returns (string memory) {
+library ColorUtils {
+    function uint2str(uint256 i) internal pure returns (string memory) {
         if (i == 0) {
             return "0";
         }
@@ -25,7 +25,7 @@ contract ColorUtils {
         return string(bstr);
     }
 
-    function _uint2hex(uint24 i) internal pure returns (string memory) {
+    function uint2hex(uint24 i) internal pure returns (string memory) {
         bytes memory o = new bytes(6);
         uint24 mask = 0x00000f; // hex 15
         uint256 k = 6;

@@ -12,7 +12,7 @@ import "./lib/ColorUtils.sol";
 *
 * Crowd-sourced pixel art community
 */
-contract Dixel is Ownable, ReentrancyGuard, ColorUtils {
+contract Dixel is Ownable, ReentrancyGuard {
     IERC20 public baseToken;
 
     uint16 private constant CANVAS_SIZE = 16; // 16 x 16 pixels
@@ -119,11 +119,11 @@ contract Dixel is Ownable, ReentrancyGuard, ColorUtils {
                 svg = string(abi.encodePacked(
                     svg,
                     '<rect width="40" height="40" x="',
-                    _uint2str(x * 40),
+                    ColorUtils.uint2str(x * 40),
                     '" y="',
-                    _uint2str(y * 40),
+                    ColorUtils.uint2str(y * 40),
                     '" fill="#',
-                    _uint2hex(pixels[x][y].color),
+                    ColorUtils.uint2hex(pixels[x][y].color),
                     '"/>'
                 ));
             }

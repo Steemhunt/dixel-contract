@@ -1,6 +1,7 @@
 const { ether, constants, expectEvent, expectRevert } = require("@openzeppelin/test-helpers");
 const { MAX_UINT256, ZERO_ADDRESS } = constants;
 const { expect } = require("chai");
+const fs = require("fs");
 
 const Dixel = artifacts.require("DixelMock");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
@@ -22,23 +23,6 @@ contract("Dixel", function(accounts) {
       expect(await this.dixel.owner()).to.equal(deployer);
     });
   });
-
-  // NOTE: We need Mock for this
-  // describe("utility functions", function() {
-  //   it("Integer to hex", async function() {
-  //     expect(await this.dixel.int2hex("16776960")).to.equal("ffff00");
-  //     expect(await this.dixel.int2hex("16777215")).to.equal("ffffff");
-  //     expect(await this.dixel.int2hex("65280")).to.equal("00ff00");
-  //     expect(await this.dixel.int2hex("15")).to.equal("00000f");
-  //   });
-
-  //   it("Integer to hex - revert on overflow", async function() {
-  //     await expectRevert(
-  //       this.dixel.int2hex("16777216"),
-  //       "value out-of-bounds"
-  //     );
-  //   });
-  // });
 
   describe("update", function() {
     beforeEach(async function() {
@@ -157,9 +141,8 @@ contract("Dixel", function(accounts) {
     });
 
     it("should generate SVG correctly", async function() {
-      // TODO;
-      // const svg = await this.dixel.generateSVG();
-      // console.log(svg);
+      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test.svg`, 'utf8');
+      expect(await this.dixel.generateSVG()).to.equal(testSVG);
     });
   });
 });

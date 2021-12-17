@@ -36,4 +36,4 @@ main()
   });
 
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
-// npx hardhat verify --network bsctest 0x8476E06ff92f99CB39c0e4C9Fc88c754c84d6177 '0x0DeC4035660f146f6c360fa0f4430b379A690213'
+// npx hardhat verify --network bsctest 0xfF202bfD9fd0E5817e7236215B4589b203a3Fcd7 '0x29F750BD6854B43CB1eeF857452ddC29B9c6C5B5'

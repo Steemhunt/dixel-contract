@@ -23,21 +23,22 @@ contract("Dixel", function(accounts) {
     });
   });
 
-  describe("utility functions", function() {
-    it("Integer to hex", async function() {
-      expect(await this.dixel.int2hex("16776960")).to.equal("ffff00");
-      expect(await this.dixel.int2hex("16777215")).to.equal("ffffff");
-      expect(await this.dixel.int2hex("65280")).to.equal("00ff00");
-      expect(await this.dixel.int2hex("15")).to.equal("00000f");
-    });
+  // NOTE: We need Mock for this
+  // describe("utility functions", function() {
+  //   it("Integer to hex", async function() {
+  //     expect(await this.dixel.int2hex("16776960")).to.equal("ffff00");
+  //     expect(await this.dixel.int2hex("16777215")).to.equal("ffffff");
+  //     expect(await this.dixel.int2hex("65280")).to.equal("00ff00");
+  //     expect(await this.dixel.int2hex("15")).to.equal("00000f");
+  //   });
 
-    it("Integer to hex - revert on overflow", async function() {
-      await expectRevert(
-        this.dixel.int2hex("16777216"),
-        "value out-of-bounds"
-      );
-    });
-  });
+  //   it("Integer to hex - revert on overflow", async function() {
+  //     await expectRevert(
+  //       this.dixel.int2hex("16777216"),
+  //       "value out-of-bounds"
+  //     );
+  //   });
+  // });
 
   describe("update", function() {
     beforeEach(async function() {
@@ -149,4 +150,15 @@ contract("Dixel", function(accounts) {
     });
   });
 
+  describe("generate SVG", function() {
+    beforeEach(async function() {
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      await this.dixel.updatePixels([[1, 1, 16711680], [2, 2, 65280]], { from: alice }); // #ff0000, #00ff00
+    });
+
+    it("should generate SVG correctly", async function() {
+      const svg = await this.dixel.generateSVG();
+      console.log(svg);
+    });
+  });
 });

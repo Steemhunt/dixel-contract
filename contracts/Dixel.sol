@@ -51,10 +51,10 @@ contract Dixel is Ownable, ReentrancyGuard {
         baseToken = IERC20(baseTokenAddress);
         _getOrAddPlayerId(baseTokenAddress); // players[0] = baseTokenAddress (burn)
 
-        for (uint256 i = 0; i < CANVAS_SIZE; i++) {
-            for (uint256 j = 0; j < CANVAS_SIZE; j++) {
+        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
                 // omit initial owner because default value 0 is correct
-                pixels[i][j].price = GENESIS_PRICE;
+                pixels[x][y].price = GENESIS_PRICE;
             }
         }
     }
@@ -108,7 +108,31 @@ contract Dixel is Ownable, ReentrancyGuard {
         return playerWallets.length;
     }
 
-    function int2hex(uint24 i) external pure returns (string memory) {
+    // MARK: - Draw SVG
+
+    function uint2str(uint256 _i) internal pure returns (string memory _uintAsString) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint256 j = _i;
+        uint256 len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint256 k = len;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
+    function int2hex(uint24 i) internal pure returns (string memory) {
         bytes memory o = new bytes(6);
         uint24 mask = 0x00000f; // hex 15
         uint256 k = 6;
@@ -120,5 +144,28 @@ contract Dixel is Ownable, ReentrancyGuard {
         } while (k > 0);
 
         return string(o);
+    }
+
+
+    function generateSVG() public view returns (string memory) {
+        // TODO: Can we put these templates as constant instance vars to save gas?
+        string memory svg = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 640 640">';
+
+        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                svg = string(abi.encodePacked(
+                    svg,
+                    '<rect width="40" height="40" x="',
+                    uint2str(x * 40),
+                    '" y="',
+                    uint2str(y * 40),
+                    '" fill="#',
+                    int2hex(pixels[x][y].color),
+                    '"/>'
+                ));
+            }
+        }
+
+        return string(abi.encodePacked(svg, '</svg>'));
     }
 }

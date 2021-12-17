@@ -147,7 +147,7 @@ contract("Dixel", function(accounts) {
 
     it("should encode SVG into Base64 correctly", async function() {
       const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-base64.txt`, 'utf8');
-      expect(await this.dixel.generateBase64EncodedSVG()).to.equal(testBase64);
+      expect(await this.dixel.generateBase64SVG()).to.equal(testBase64);
     });
   });
 });

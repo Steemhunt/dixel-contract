@@ -133,7 +133,7 @@ contract Dixel is Ownable, ReentrancyGuard {
         return string(abi.encodePacked(svg, '</svg>'));
     }
 
-    function generateBase64EncodedSVG() public view returns (string memory) {
-        return Base64.encode(bytes(generateSVG()));
+    function generateBase64SVG() external view returns (string memory) {
+        return string(abi.encodePacked('data:image/svg+xml;base64,', Base64.encode(bytes(generateSVG()))));
     }
 }

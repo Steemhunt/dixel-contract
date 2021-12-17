@@ -2,7 +2,7 @@ const { ether, constants, expectEvent, expectRevert } = require("@openzeppelin/t
 const { MAX_UINT256, ZERO_ADDRESS } = constants;
 const { expect } = require("chai");
 
-const Dixel = artifacts.require("Dixel");
+const Dixel = artifacts.require("DixelMock");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
 contract("Dixel", function(accounts) {
@@ -157,8 +157,9 @@ contract("Dixel", function(accounts) {
     });
 
     it("should generate SVG correctly", async function() {
-      const svg = await this.dixel.generateSVG();
-      console.log(svg);
+      // TODO;
+      // const svg = await this.dixel.generateSVG();
+      // console.log(svg);
     });
   });
 });

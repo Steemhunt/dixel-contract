@@ -4,6 +4,7 @@ const { expect } = require("chai");
 const fs = require("fs");
 
 const Dixel = artifacts.require("DixelMock");
+const DixelArt = artifacts.require("DixelArt");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
 contract("Dixel", function(accounts) {
@@ -15,7 +16,9 @@ contract("Dixel", function(accounts) {
     await this.baseToken.mint(alice, ether("100"));
     await this.baseToken.mint(bob, ether("100"));
 
-    this.dixel = await Dixel.new(this.baseToken.address);
+    this.nft = await DixelArt.new();
+    this.dixel = await Dixel.new(this.baseToken.address, this.nft.address);
+    await this.nft.transferOwnership(this.dixel.address); // Set owner as Dixel contract, so it can mint new NFTs
   });
 
   describe("admin features", function() {

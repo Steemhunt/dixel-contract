@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./lib/Base64.sol";
+import "./lib/ColorUtils.sol";
 
 /**
  * @dev DixelArt NFT token, including:
@@ -24,22 +26,40 @@ contract DixelArt is
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
-    string private _baseTokenURI;
+    uint24[32][32][] pixelHistory;
 
-    constructor(address dixelContract) ERC721("Dixel Collection", "DXART") {
-        _baseTokenURI = "data:image/svg+xml;base64,";
+    constructor() ERC721("Dixel Collection", "DXART") {}
 
-        transferOwnership(dixelContract); // Set owner as Dixel contract, so it can mint new NFTs
+    function getPixelsFor(uint256 tokenId) public view returns (uint24[32][32] memory) {
+        return pixelHistory[tokenId];
     }
 
-    function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+    function generateJSON(uint256 tokenId) public view returns (string memory json) {
+        // json = string(abi.encodePacked(
+        //     '{"name": "Dixel Collection #',
+        //     ColorUtils.uint2str(tokenId),
+        //     '",',
+        //     ColorUtils.uint2str(y * 40),
+        //     '" fill="#',
+        //     ColorUtils.uint2hex(pixels[x][y].color),
+        //     '"/>'
+        // ));
+
+        // TODO:
     }
 
-    function mint(address to) public onlyOwner {
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        return string(abi.encodePacked('data:application/json;base64,', Base64.encode(bytes(generateJSON(tokenId)))));
+    }
+
+    function mint(address to, uint24[32][32] memory pixelColors) public onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
-        _mint(to, _tokenIdTracker.current());
+        uint256 tokenId = _tokenIdTracker.current();
+        _mint(to, tokenId);
+        pixelHistory.push(pixelColors);
         _tokenIdTracker.increment();
     }
 
@@ -49,7 +69,6 @@ contract DixelArt is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        virtual
         override(ERC721, ERC721Enumerable)
         returns (bool)
     {
@@ -60,8 +79,7 @@ contract DixelArt is
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable) {
+    ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
-
 }

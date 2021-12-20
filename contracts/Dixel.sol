@@ -7,16 +7,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./lib/ColorUtils.sol";
 import "./lib/Base64.sol";
+import "./DixelSVGGenerator.sol";
+import "./DixelArt.sol";
 
 /**
 * @title Dixel
 *
 * Crowd-sourced pixel art community
 */
-contract Dixel is Ownable, ReentrancyGuard {
+contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
+    DixelArt public nft;
 
-    uint16 private constant CANVAS_SIZE = 16; // 16 x 16 pixels
     uint200 private constant GENESIS_PRICE = 1e18; // Initial price: 1 DX
     uint16 private constant PRICE_INCREASE_RATE = 500;
     // uint16 private constant BURN_RATE = 100; // NOTE: Remove for gas savings
@@ -48,8 +50,10 @@ contract Dixel is Ownable, ReentrancyGuard {
     event UpdatePixels(address player, uint16 pixelCount, uint224 totalPrice);
     event ClaimReward(address player, uint224 rewardAmount);
 
-    constructor(address baseTokenAddress) {
+    constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
+        nft = DixelArt(dixelArtAddress);
+
         _getOrAddPlayerId(baseTokenAddress); // players[0] = baseTokenAddress (burn)
 
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
@@ -92,6 +96,8 @@ contract Dixel is Ownable, ReentrancyGuard {
 
         require(baseToken.transferFrom(msgSender, address(this), totalPrice), 'TOKEN_TRANSFER_FAILED');
 
+        nft.mint(msgSender, getPixelColors());
+
         emit UpdatePixels(msgSender, uint16(params.length), totalPrice);
     }
 
@@ -111,29 +117,19 @@ contract Dixel is Ownable, ReentrancyGuard {
 
     // MARK: - Draw SVG
 
-    function generateSVG() public view returns (string memory) {
-        // TODO: Can we put these templates as constant instance vars to save gas?
-        string memory svg = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 640 640">';
-
+    function getPixelColors() public view returns (uint24[32][32] memory pixelColors) {
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
             for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-                svg = string(abi.encodePacked(
-                    svg,
-                    '<rect width="40" height="40" x="',
-                    ColorUtils.uint2str(x * 40),
-                    '" y="',
-                    ColorUtils.uint2str(y * 40),
-                    '" fill="#',
-                    ColorUtils.uint2hex(pixels[x][y].color),
-                    '"/>'
-                ));
+                pixelColors[x][y] = pixels[x][y].color;
             }
         }
+    }
 
-        return string(abi.encodePacked(svg, '</svg>'));
+    function generateSVG() public view returns (string memory) {
+        return _generateSVG(getPixelColors());
     }
 
     function generateBase64SVG() external view returns (string memory) {
-        return string(abi.encodePacked('data:image/svg+xml;base64,', Base64.encode(bytes(generateSVG()))));
+        return _generateBase64SVG(getPixelColors());
     }
 }

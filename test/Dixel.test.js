@@ -144,12 +144,12 @@ contract("Dixel", function(accounts) {
     });
 
     it("should generate SVG correctly", async function() {
-      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test.svg`, 'utf8');
+      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, 'utf8');
       expect(await this.dixel.generateSVG()).to.equal(testSVG);
     });
 
     it("should encode SVG into Base64 correctly", async function() {
-      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-base64.txt`, 'utf8');
+      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, 'utf8');
       expect(await this.dixel.generateBase64SVG()).to.equal(testBase64);
     });
   });
@@ -157,7 +157,7 @@ contract("Dixel", function(accounts) {
   describe("generate NFT", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
+      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
     });
 
     it('outputs last pixel status correctly', async function() {
@@ -178,8 +178,32 @@ contract("Dixel", function(accounts) {
       expect(pixels[2][2]).to.be.bignumber.equal("0");
     });
 
-    // TODO: Should emit Transfer(address(0), to, tokenId) event
-    // Alice should have the nft
-    // NFT has the
+    it('alice should have the nft balance', async function() {
+      expect(await this.nft.balanceOf(alice)).to.be.bignumber.equal("1");
+    });
+
+    it('alice should be the owner of the NFT', async function() {
+      expect(await this.nft.ownerOf(0)).to.equal(alice);
+    });
+
+    it("should outputs the SVG correctly", async function() {
+      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, 'utf8');
+      expect(await this.nft.generateSVG(0)).to.equal(testSVG);
+    });
+
+    it("should outputs the SVG into Base64 correctly", async function() {
+      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, 'utf8');
+      expect(await this.nft.generateBase64SVG(0)).to.equal(testBase64);
+    });
+
+    it("should generate tokenURI in JSON format", async function() {
+      const testJSON = fs.readFileSync(`${__dirname}/fixtures/test-json.json`, 'utf8');
+      expect(await this.nft.generateJSON(0)).to.equal(testJSON);
+    });
+
+    it("should outputs tokenURI correctly", async function() {
+      const testJSONBase64 = fs.readFileSync(`${__dirname}/fixtures/test-json-base64.txt`, 'utf8');
+      expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);
+    });
   });
 });

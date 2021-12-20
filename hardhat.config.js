@@ -60,6 +60,9 @@ module.exports = {
   },
   etherscan: {
     apiKey: process.env.BSCSCAN_API_KEY
+  },
+  mocha: {
+    timeout: 60000 // 1 minute for test timeout
   }
 };
 

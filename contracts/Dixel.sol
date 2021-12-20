@@ -125,7 +125,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
-    function generateSVG() public view returns (string memory) {
+    function generateSVG() external view returns (string memory) {
         return _generateSVG(getPixelColors());
     }
 

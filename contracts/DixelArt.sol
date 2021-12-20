@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./lib/Base64.sol";
 import "./lib/ColorUtils.sol";
+import "./DixelSVGGenerator.sol";
 
 /**
  * @dev DixelArt NFT token, including:
@@ -21,7 +22,8 @@ contract DixelArt is
     Context,
     ERC721Enumerable,
     ERC721Burnable,
-    Ownable
+    Ownable,
+    DixelSVGGenerator
 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
@@ -34,22 +36,29 @@ contract DixelArt is
         return pixelHistory[tokenId];
     }
 
-    function generateJSON(uint256 tokenId) public view returns (string memory json) {
-        // json = string(abi.encodePacked(
-        //     '{"name": "Dixel Collection #',
-        //     ColorUtils.uint2str(tokenId),
-        //     '",',
-        //     ColorUtils.uint2str(y * 40),
-        //     '" fill="#',
-        //     ColorUtils.uint2hex(pixels[x][y].color),
-        //     '"/>'
-        // ));
+    function generateSVG(uint256 tokenId) external view returns (string memory) {
+        return _generateSVG(getPixelsFor(tokenId));
+    }
 
-        // TODO:
+    function generateBase64SVG(uint256 tokenId) public view returns (string memory) {
+        return _generateBase64SVG(getPixelsFor(tokenId));
+    }
+
+    function generateJSON(uint256 tokenId) public view returns (string memory json) {
+        json = string(abi.encodePacked(
+            '{"name": "Dixel Collection #',
+            ColorUtils.uint2str(tokenId),
+            '","image": "',
+            generateBase64SVG(tokenId),
+            '"}'
+        ));
+
+        // TODO: Do we need other attributes?
+        // Refs: https://docs.opensea.io/docs/metadata-standards#attributes
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(tokenId), "TOKEN_NOT_FOUND");
 
         return string(abi.encodePacked('data:application/json;base64,', Base64.encode(bytes(generateJSON(tokenId)))));
     }

@@ -30,10 +30,10 @@ contract("Dixel", function(accounts) {
   describe("update", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 2, 65280]], { from: alice }); // #ff0000, #00ff00
+      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
 
       this.pixel1 = await this.dixel.pixels(1, 1);
-      this.pixel2 = await this.dixel.pixels(2, 2);
+      this.pixel2 = await this.dixel.pixels(2, 0);
       this.alicePlayer = await this.dixel.players(alice);
     });
 
@@ -140,7 +140,7 @@ contract("Dixel", function(accounts) {
   describe("generate SVG", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      await this.dixel.updatePixels([[1, 1, 16711680], [2, 2, 65280]], { from: alice }); // #ff0000, #00ff00
+      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
     });
 
     it("should generate SVG correctly", async function() {
@@ -152,5 +152,34 @@ contract("Dixel", function(accounts) {
       const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-base64.txt`, 'utf8');
       expect(await this.dixel.generateBase64SVG()).to.equal(testBase64);
     });
+  });
+
+  describe("generate NFT", function() {
+    beforeEach(async function() {
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
+    });
+
+    it('outputs last pixel status correctly', async function() {
+      const pixel1 = await this.nft.pixelHistory(0, 1, 1);
+      expect(pixel1).to.be.bignumber.equal("16711680");
+    });
+
+    it('outputs last pixel status correctly 2', async function() {
+      const pixel2 = await this.nft.pixelHistory(0, 2, 0);
+      expect(pixel2).to.be.bignumber.equal("65280");
+    });
+
+    it('outputs all last pixels from history 0', async function() {
+      const pixels = await this.nft.getPixelsFor(0);
+
+      expect(pixels[1][1]).to.be.bignumber.equal("16711680");
+      expect(pixels[2][0]).to.be.bignumber.equal("65280");
+      expect(pixels[2][2]).to.be.bignumber.equal("0");
+    });
+
+    // TODO: Should emit Transfer(address(0), to, tokenId) event
+    // Alice should have the nft
+    // NFT has the
   });
 });

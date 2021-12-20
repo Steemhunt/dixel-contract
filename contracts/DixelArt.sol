@@ -26,7 +26,7 @@ contract DixelArt is
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
-    uint24[32][32][] pixelHistory;
+    uint24[32][32][] public pixelHistory;
 
     constructor() ERC721("Dixel Collection", "DXART") {}
 

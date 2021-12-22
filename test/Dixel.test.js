@@ -47,6 +47,10 @@ contract("Dixel", function(accounts) {
       expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayer.id);
     });
 
+    it("should add alice into playerWallets", async function() {
+      expect(await this.dixel.playerWallets(this.alicePlayer.id)).to.be.bignumber.equal(alice);
+    });
+
     it("should increase pixels prices", async function() {
       expect(this.pixel1.price).to.be.bignumber.equal(ether("1.05"));
       expect(this.pixel2.price).to.be.bignumber.equal(ether("1.05"));

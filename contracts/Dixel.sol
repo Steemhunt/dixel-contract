@@ -44,7 +44,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     Pixel[CANVAS_SIZE][CANVAS_SIZE] public pixels;
 
     // GAS_SAVING: Store player's wallet addresses
-    address[] playerWallets;
+    address[] public playerWallets;
     mapping(address => Player) public players;
 
     event UpdatePixels(address player, uint16 pixelCount, uint224 totalPrice);

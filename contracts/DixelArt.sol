@@ -30,7 +30,7 @@ contract DixelArt is
 
     uint24[32][32][] public pixelHistory;
 
-    constructor() ERC721("Dixel Collection", "DXART") {}
+    constructor() ERC721("Dixel Collection", "dART") {}
 
     function getPixelsFor(uint256 tokenId) public view returns (uint24[32][32] memory) {
         return pixelHistory[tokenId];
@@ -48,6 +48,7 @@ contract DixelArt is
         json = string(abi.encodePacked(
             '{"name": "Dixel Collection #',
             ColorUtils.uint2str(tokenId),
+            '","description": "A single art canvas where users can overwrite price-compounded pixels to generate fully on-chain NFT via dixel.club',
             '","image": "',
             generateBase64SVG(tokenId),
             '"}'

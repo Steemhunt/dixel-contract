@@ -12,7 +12,7 @@ async function main() {
 
   // MARK: - Deploy test token (only for testnet)
   const testToken = await hre.ethers.getContractFactory('ERC20PresetMinterPauser');
-  const token = await testToken.deploy('Test Dixel', 'TEST_DX');
+  const token = await testToken.deploy('Test Dixel', 'TEST_DIXEL');
   await token.deployed();
   await token.mint(deployer, '10000000000000000000000'); // 10,000 tokens
 
@@ -44,5 +44,10 @@ main()
   });
 
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
-// npx hardhat verify --network bsctest 0x04F1F2e0A0Dcd39C0Ea5F8db30E438d644Bf0Cfa
-// npx hardhat verify --network bsctest 0x3D6B8e182fe42C15B8ef99332b69566671dABE89 '0xB16717028f5038CcB9Bc228a92D7453E32F76e33' '0x04F1F2e0A0Dcd39C0Ea5F8db30E438d644Bf0Cfa'
+
+// DIXEL token
+// npx hardhat verify --network bsctest 0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4 'Test Dixel', 'TEST_DIXEL'
+// DixelArt
+// npx hardhat verify --network bsctest 0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4
+// Dixel, BaseToken, DixelArt
+// npx hardhat verify --network bsctest 0x866399B1444e245245bC032E6E64DA6884bab90C '0x79144866Fe78169D5fC08069ede7d36006B96DE9' '0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4'

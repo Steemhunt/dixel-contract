@@ -11,7 +11,7 @@ import "./lib/Base64.sol";
 contract DixelSVGGenerator {
   uint16 internal constant CANVAS_SIZE = 16; // 16 x 16 pixels
 
-  function _generateSVG(uint24[32][32] memory pixels) internal pure returns (string memory) {
+  function _generateSVG(uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixels) internal pure returns (string memory) {
       // TODO: Can we put these templates as constant instance vars to save gas?
       string memory svg = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 640 640">';
 
@@ -33,7 +33,7 @@ contract DixelSVGGenerator {
       return string(abi.encodePacked(svg, '</svg>'));
   }
 
-  function _generateBase64SVG(uint24[32][32] memory pixels) internal pure returns (string memory) {
+  function _generateBase64SVG(uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixels) internal pure returns (string memory) {
       return string(abi.encodePacked('data:image/svg+xml;base64,', Base64.encode(bytes(_generateSVG(pixels)))));
   }
 }

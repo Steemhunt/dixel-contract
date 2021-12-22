@@ -117,7 +117,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
     // MARK: - Draw SVG
 
-    function getPixelColors() public view returns (uint24[32][32] memory pixelColors) {
+    function getPixelColors() public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) {
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
             for (uint256 y = 0; y < CANVAS_SIZE; y++) {
                 pixelColors[x][y] = pixels[x][y].color;

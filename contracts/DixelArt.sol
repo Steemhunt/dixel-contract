@@ -28,11 +28,11 @@ contract DixelArt is
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
-    uint24[32][32][] public pixelHistory;
+    uint24[CANVAS_SIZE][CANVAS_SIZE][] public pixelHistory;
 
     constructor() ERC721("Dixel Collection", "dART") {}
 
-    function getPixelsFor(uint256 tokenId) public view returns (uint24[32][32] memory) {
+    function getPixelsFor(uint256 tokenId) public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory) {
         return pixelHistory[tokenId];
     }
 
@@ -64,7 +64,7 @@ contract DixelArt is
         return string(abi.encodePacked('data:application/json;base64,', Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(address to, uint24[32][32] memory pixelColors) public onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) public onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
         uint256 tokenId = _tokenIdTracker.current();

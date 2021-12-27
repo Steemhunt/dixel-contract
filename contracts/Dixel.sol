@@ -125,6 +125,22 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
+    function getPixelOwners() public view returns (address[CANVAS_SIZE][CANVAS_SIZE] memory pixelOwners) {
+        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                pixelOwners[x][y] = playerWallets[pixels[x][y].owner];
+            }
+        }
+    }
+
+    function getPixelPrices() public view returns (uint200[CANVAS_SIZE][CANVAS_SIZE] memory pixelPrices) {
+        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                pixelPrices[x][y] = pixels[x][y].price;
+            }
+        }
+    }
+
     function generateSVG() external view returns (string memory) {
         return _generateSVG(getPixelColors());
     }

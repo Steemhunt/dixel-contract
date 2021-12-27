@@ -44,10 +44,7 @@ main()
   });
 
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
-
-// DIXEL token
-// npx hardhat verify --network bsctest 0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4 'Test Dixel', 'TEST_DIXEL'
 // DixelArt
-// npx hardhat verify --network bsctest 0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4
+// npx hardhat verify --network bsctest 0xBD4a906b400331df7295220BB6C86dCEd645C40C
 // Dixel, BaseToken, DixelArt
-// npx hardhat verify --network bsctest 0x866399B1444e245245bC032E6E64DA6884bab90C '0x79144866Fe78169D5fC08069ede7d36006B96DE9' '0xAC7755f5CEDb18C82DA2273082C88477f7Bf43a4'
+// npx hardhat verify --network bsctest 0x557B0c5a542Cf91179700C6d4ac16c565e1c3D04 '0xc6d3a8976AFa1C004B6fa4Ebf96bf90188586445' '0xBD4a906b400331df7295220BB6C86dCEd645C40C'

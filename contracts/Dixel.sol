@@ -73,8 +73,9 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         return players[wallet].id;
     }
 
-    function updatePixels(PixelParams[] calldata params) external nonReentrant {
+    function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
         require(params.length <= CANVAS_SIZE * CANVAS_SIZE, 'TOO_MANY_PIXELS');
+        require(nextTokenId == nft.nextTokenId(), 'NFT_EDITION_NUMBER_MISMATCHED');
 
         address msgSender = _msgSender();
         uint32 owner = _getOrAddPlayerId(msgSender);

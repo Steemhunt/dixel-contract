@@ -73,6 +73,10 @@ contract DixelArt is
         _tokenIdTracker.increment();
     }
 
+    function nextTokenId() external view returns (uint256) {
+        return _tokenIdTracker.current();
+    }
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */

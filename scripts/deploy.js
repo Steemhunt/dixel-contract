@@ -15,6 +15,8 @@ async function main() {
   const token = await testToken.deploy('Test Dixel', 'TEST_DIXEL');
   await token.deployed();
   await token.mint(deployer, '10000000000000000000000'); // 10,000 tokens
+  await token.mint('0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '10000000000000000000000'); // tester 1
+  await token.mint('0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '10000000000000000000000'); // tester 2
 
   console.log(`Test token is deployed at ${token.address}`);
 
@@ -44,7 +46,9 @@ main()
   });
 
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
+// Test Token
+// npx hardhat verify --network bsctest 0x0645798568fBEe7389c58673331672F60ee4074B 'Test Dixel', 'TEST_DIXEL'
 // DixelArt
-// npx hardhat verify --network bsctest 0xBD4a906b400331df7295220BB6C86dCEd645C40C
+// npx hardhat verify --network bsctest 0xb8627D0a1f6e8C405d29997d951Ab65137FBDA98
 // Dixel, BaseToken, DixelArt
-// npx hardhat verify --network bsctest 0x557B0c5a542Cf91179700C6d4ac16c565e1c3D04 '0xc6d3a8976AFa1C004B6fa4Ebf96bf90188586445' '0xBD4a906b400331df7295220BB6C86dCEd645C40C'
+// npx hardhat verify --network bsctest 0x0E9c5D95765Af4CE33fED6FF20B8Ba2b985DE7d6 '0x0645798568fBEe7389c58673331672F60ee4074B' '0xb8627D0a1f6e8C405d29997d951Ab65137FBDA98'

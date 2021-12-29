@@ -30,11 +30,11 @@ contract("Dixel", function(accounts) {
   describe("update", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
+      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
 
       this.pixel1 = await this.dixel.pixels(1, 1);
       this.pixel2 = await this.dixel.pixels(2, 0);
-      this.alicePlayer = await this.dixel.players(alice);
+      this.alicePlayerId = await this.dixel.players(alice);
     });
 
     it("should update pixel colors", async function() {
@@ -43,12 +43,12 @@ contract("Dixel", function(accounts) {
     });
 
     it("should update owner of pixels", async function() {
-      expect(this.pixel1.owner).to.be.bignumber.equal(this.alicePlayer.id);
-      expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayer.id);
+      expect(this.pixel1.owner).to.be.bignumber.equal(this.alicePlayerId);
+      expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayerId);
     });
 
     it("should add alice into playerWallets", async function() {
-      expect(await this.dixel.playerWallets(this.alicePlayer.id)).to.be.bignumber.equal(alice);
+      expect(await this.dixel.playerWallets(this.alicePlayerId)).to.be.bignumber.equal(alice);
     });
 
     it("should increase pixels prices", async function() {
@@ -60,13 +60,8 @@ contract("Dixel", function(accounts) {
       expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether("97.9"));
     });
 
-    it("should transfer tokens to the contract", async function() {
-      expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(ether("2.1"));
-    });
-
-    it("should update original owner's pending rewards", async function() {
-      const originalOwner = await this.dixel.players(this.baseToken.address);
-      expect(originalOwner.pendingReward).to.be.bignumber.equal(ether("2.1"));
+    it("should transfer tokens to the base token contract (= burning)", async function() {
+      expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether("2.1"));
     });
 
     it("should have 2 player count", async function() {
@@ -84,10 +79,10 @@ contract("Dixel", function(accounts) {
     describe("update again", function() {
       beforeEach(async function() {
         await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: bob });
-        this.receipt2 = await this.dixel.updatePixels([[1, 1, 255]], { from: bob }); // #0000ff
+        this.receipt2 = await this.dixel.updatePixels([[1, 1, 255]], 1, { from: bob }); // #0000ff
 
         this.pixel1 = await this.dixel.pixels(1, 1);
-        this.bobPlayer = await this.dixel.players(bob);
+        this.bobPlayerId = await this.dixel.players(bob);
       });
 
       it("should update pixel colors", async function() {
@@ -95,7 +90,7 @@ contract("Dixel", function(accounts) {
       });
 
       it("should update owner of pixels", async function() {
-        expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayer.id);
+        expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayerId);
       });
 
       it("should increase pixels' price", async function() {
@@ -106,13 +101,8 @@ contract("Dixel", function(accounts) {
         expect(await this.baseToken.balanceOf(bob)).to.be.bignumber.equal(ether("98.8975"));
       });
 
-      it("should transfer tokens to the contract", async function() {
-        expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(ether("3.2025"));
-      });
-
-      it("should update original owner's pending rewards", async function() {
-        const originalOwner = await this.dixel.players(alice);
-        expect(originalOwner.pendingReward).to.be.bignumber.equal(ether("1.1025"));
+      it("should transfer tokens to the base token contract (= burning)", async function() {
+        expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether("3.2025"));
       });
 
       it("should emit UpdatePixels event", async function() {
@@ -120,18 +110,6 @@ contract("Dixel", function(accounts) {
           player: bob,
           pixelCount: '1',
           totalPrice: ether('1.1025')
-        });
-      });
-
-      it("should let alice to claim rewards", async function() {
-        await this.dixel.claimReward({ from: alice });
-        expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether("99.0025")); // 97.9 + 1.1025
-      });
-
-      it("should emit ClaimReward event", async function() {
-        expectEvent(await this.dixel.claimReward({ from: alice }), "ClaimReward", {
-          player: alice,
-          rewardAmount: ether('1.1025')
         });
       });
 
@@ -144,7 +122,7 @@ contract("Dixel", function(accounts) {
   describe("generate SVG", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
+      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
     });
 
     it("should generate SVG correctly", async function() {
@@ -161,7 +139,7 @@ contract("Dixel", function(accounts) {
   describe("generate NFT", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], { from: alice }); // #ff0000, #00ff00
+      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
     });
 
     it('outputs last pixel status correctly', async function() {

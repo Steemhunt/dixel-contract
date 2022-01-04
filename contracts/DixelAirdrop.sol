@@ -9,120 +9,109 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract DixelAirdrop is Ownable, ReentrancyGuard {
     IERC20 public baseToken;
 
+    bool public canClaim;
+
     struct WhiteListParams {
         address wallet;
-        uint8 airdropCategory; // contribution category
-        uint128 contribution;
+        uint120 nftContribution;
+        uint120 mintClubContribution;
     }
 
     struct Contribution {
-        uint128 nftContribution; // category: 1
-        uint128 mintClubContribution; // category: 2
+        uint120 nftContribution; // category: 1
+        uint120 mintClubContribution; // category: 2
+        bool claimed;
     }
 
     struct Total {
-        uint128 nftTotalShare;
-        uint128 mintClubTotalShare;
+        uint80 nftTotalAmount; // Max 1M
+        uint80 mintClubTotalAmount;
+        uint24 whiteListCount;
         uint128 nftTotalContribution;
         uint128 mintClubTotalContribution;
     }
 
-    mapping(address => Contribution) userContributions;
+    Total public total;
+    mapping(address => Contribution) public userContributions;
 
-    // TODO:
+    event ClaimAirdrop(address user, uint256 amount);
 
-    // // GAS_SAVING: Store player's wallet addresses
-    // address[] public playerWallets;
-    // mapping(address => uint32) public players;
+    constructor(address baseTokenAddress) {
+        baseToken = IERC20(baseTokenAddress);
+    }
 
-    // event UpdatePixels(address player, uint16 pixelCount, uint224 totalPrice);
+    function addTokens(uint8 airdropCategory, uint80 amount) external onlyOwner {
+        require(!canClaim, 'CANNOT_CHANGE_TOTAL_SHARE_DURING_CLAIMING');
+        require(airdropCategory == 1 || airdropCategory == 2, 'INVALID_CATEGORY');
 
-    // constructor(address baseTokenAddress, address dixelArtAddress) {
-    //     baseToken = IERC20(baseTokenAddress);
-    //     nft = DixelArt(dixelArtAddress);
+        if (airdropCategory == 1) {
+            require(baseToken.transferFrom(_msgSender(), address(this), amount), 'TOKEN_TRANSFER_FAILED');
+            total.nftTotalAmount += amount;
+        }
 
-    //     // players[0] = baseTokenAddress (= token burning)
-    //     playerWallets.push(baseTokenAddress);
-    //     players[baseTokenAddress] = 0;
+        if (airdropCategory == 2) {
+            require(baseToken.transferFrom(_msgSender(), address(this), amount), 'TOKEN_TRANSFER_FAILED');
+            total.mintClubTotalAmount += amount;
+        }
+    }
 
-    //     for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-    //         for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-    //             // omit initial owner because default value 0 is correct
-    //             pixels[x][y].price = GENESIS_PRICE;
-    //         }
-    //     }
-    // }
+    function startAirdrop() external onlyOwner {
+        canClaim = true;
+    }
 
-    // function _getOrAddPlayerId(address wallet) private returns (uint32) {
-    //     if (players[wallet] == 0 && wallet != playerWallets[0]) {
-    //         playerWallets.push(wallet);
-    //         players[wallet] = uint32(playerWallets.length - 1);
-    //     }
+    function closeAirdrop() external onlyOwner {
+        canClaim = false;
 
-    //     return players[wallet];
-    // }
+        // Withdraw all leftover balance
+        require(baseToken.transferFrom(address(this), _msgSender(), baseToken.balanceOf(address(this))), 'TOKEN_TRANSFER_FAILED');
+    }
 
-    // function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
-    //     require(params.length <= CANVAS_SIZE * CANVAS_SIZE, 'TOO_MANY_PIXELS');
-    //     require(nextTokenId == nft.nextTokenId(), 'NFT_EDITION_NUMBER_MISMATCHED');
+    function whitelist(WhiteListParams[] calldata params) external onlyOwner {
+        require(!canClaim, 'CANNOT_ADD_WHITELIST_DURING_CLAIMING');
 
-    //     address msgSender = _msgSender();
-    //     uint32 owner = _getOrAddPlayerId(msgSender);
+        for (uint256 i = 0; i < params.length; i++) {
+            require(userContributions[params[i].wallet].nftContribution == 0, 'DUPLICATED_RECORD');
+            require(userContributions[params[i].wallet].mintClubContribution == 0, 'DUPLICATED_RECORD');
 
-    //     uint224 totalPrice = 0;
-    //     for (uint256 i = 0; i < params.length; i++) {
-    //         Pixel storage pixel = pixels[params[i].x][params[i].y];
+            userContributions[params[i].wallet].nftContribution = params[i].nftContribution;
+            userContributions[params[i].wallet].mintClubContribution = params[i].mintClubContribution;
 
-    //         pixel.color = params[i].color;
-    //         pixel.owner = owner;
-    //         pixel.price = pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE;
+            total.nftTotalContribution += params[i].nftContribution;
+            total.mintClubTotalContribution += params[i].mintClubContribution;
+            total.whiteListCount += 1;
+        }
+    }
 
-    //         totalPrice += pixel.price;
-    //     }
+    function isWhiteList() public view returns (bool) {
+        Contribution memory c = userContributions[_msgSender()];
 
-    //     // Burn all tokens spent on creating a new edition of NFT
-    //     require(baseToken.transferFrom(msgSender, address(baseToken), totalPrice), 'TOKEN_BURN_FAILED');
+        return c.nftContribution > 0 || c.mintClubContribution > 0;
+    }
 
-    //     nft.mint(msgSender, getPixelColors());
+    function airdropAmount() public view returns (uint256) {
+        Contribution memory c = userContributions[_msgSender()];
 
-    //     emit UpdatePixels(msgSender, uint16(params.length), totalPrice);
-    // }
+        return total.nftTotalAmount * c.nftContribution / total.nftTotalContribution +
+            total.mintClubTotalAmount * c.mintClubContribution / total.mintClubTotalContribution;
+    }
 
-    // function totalPlayerCount() external view returns (uint256) {
-    //     return playerWallets.length;
-    // }
+    function hasClaimed() public view returns (bool) {
+        return userContributions[_msgSender()].claimed;
+    }
 
-    // // MARK: - Draw SVG
+    function claim() external {
+        require(canClaim, 'AIRDROP_HAS_NOT_STARTED_OR_FINISHED');
+        require(isWhiteList(), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
+        require(!hasClaimed(), 'ALREADY_CLAIMED');
 
-    // function getPixelColors() public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) {
-    //     for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-    //         for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-    //             pixelColors[x][y] = pixels[x][y].color;
-    //         }
-    //     }
-    // }
+        // TODO: Refactor _msgSender() function to see if saving gas
 
-    // function getPixelOwners() public view returns (address[CANVAS_SIZE][CANVAS_SIZE] memory pixelOwners) {
-    //     for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-    //         for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-    //             pixelOwners[x][y] = playerWallets[pixels[x][y].owner];
-    //         }
-    //     }
-    // }
+        uint256 amount = airdropAmount();
 
-    // function getPixelPrices() public view returns (uint200[CANVAS_SIZE][CANVAS_SIZE] memory pixelPrices) {
-    //     for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-    //         for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-    //             pixelPrices[x][y] = pixels[x][y].price;
-    //         }
-    //     }
-    // }
+        userContributions[_msgSender()].claimed = true;
+        require(baseToken.transferFrom(address(this), _msgSender(), amount), 'TOKEN_TRANSFER_FAILED');
 
-    // function generateSVG() external view returns (string memory) {
-    //     return _generateSVG(getPixelColors());
-    // }
+        emit ClaimAirdrop(_msgSender(), amount);
+    }
 
-    // function generateBase64SVG() external view returns (string memory) {
-    //     return _generateBase64SVG(getPixelColors());
-    // }
 }

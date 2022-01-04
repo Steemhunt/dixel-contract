@@ -45,7 +45,7 @@ contract("DixelAirdrop", function(accounts) {
     });
 
     it("should set correct nftTotalContribution", async function() {
-      expect(this.total.nftTotalContribution).to.be.bignumber.equal(ether("300"));
+      expect(this.total.nftTotalContribution).to.be.bignumber.equal(ether("400"));
     });
 
     it("should set correct mintClubTotalContribution", async function() {

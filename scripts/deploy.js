@@ -47,6 +47,6 @@ main()
 
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
 // DixelArt
-// npx hardhat verify --network bsctest 0xb304a90FA10190b796D599c10D5B1572B8eebf3b
+// npx hardhat verify --network bsctest 0x1b706307606Fe17CB23fae555a325F53C4ACC896
 // Dixel, BaseToken, DixelArt
-// npx hardhat verify --network bsctest 0x777789c6315d7B33207f86cd75530b413c6c0EAA '0x969883ADB7850D167B13676D0599a0B7aDeD19aD' '0xb304a90FA10190b796D599c10D5B1572B8eebf3b'
+// npx hardhat verify --network bsctest 0x767a596F582D274e88a82866705e5957077ACa54 '0x6B04cD496b958C49b1A3Dc1bc8bA08472Fd244DC' '0x1b706307606Fe17CB23fae555a325F53C4ACC896'

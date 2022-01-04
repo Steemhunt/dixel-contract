@@ -13,22 +13,22 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
 
     struct WhiteListParams {
         address wallet;
-        uint120 nftContribution;
-        uint120 mintClubContribution;
+        uint224 nftContribution;
+        uint224 mintClubContribution;
     }
 
     struct Contribution {
-        uint120 nftContribution; // category: 1
-        uint120 mintClubContribution; // category: 2
         bool claimed;
+        uint224 nftContribution; // category: 1
+        uint224 mintClubContribution; // category: 2
     }
 
     struct Total {
-        uint80 nftTotalAmount; // Max 1M
-        uint80 mintClubTotalAmount;
         uint24 whiteListCount;
-        uint128 nftTotalContribution;
-        uint128 mintClubTotalContribution;
+        uint224 nftTotalAmount;
+        uint224 mintClubTotalAmount;
+        uint224 nftTotalContribution;
+        uint224 mintClubTotalContribution;
     }
 
     Total public total;
@@ -56,6 +56,8 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
     }
 
     function startAirdrop() external onlyOwner {
+        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), 'APPROVE_FAILED');
+
         canClaim = true;
     }
 
@@ -82,6 +84,8 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         }
     }
 
+    // MARK: - User accessible methods
+
     function isWhiteList() public view returns (bool) {
         Contribution memory c = userContributions[_msgSender()];
 
@@ -95,6 +99,14 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
             total.mintClubTotalAmount * c.mintClubContribution / total.mintClubTotalContribution;
     }
 
+    function claimableAmount() public view returns (uint256) {
+        if (!canClaim || hasClaimed()) {
+            return 0;
+        }
+
+        return airdropAmount();
+    }
+
     function hasClaimed() public view returns (bool) {
         return userContributions[_msgSender()].claimed;
     }
@@ -106,7 +118,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
 
         // TODO: Refactor _msgSender() function to see if saving gas
 
-        uint256 amount = airdropAmount();
+        uint256 amount = claimableAmount();
 
         userContributions[_msgSender()].claimed = true;
         require(baseToken.transferFrom(address(this), _msgSender(), amount), 'TOKEN_TRANSFER_FAILED');

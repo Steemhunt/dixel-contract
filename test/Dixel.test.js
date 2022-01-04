@@ -7,6 +7,8 @@ const Dixel = artifacts.require("DixelMock");
 const DixelArt = artifacts.require("DixelArt");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
+const GENESIS_PRICE = 1.0;
+
 contract("Dixel", function(accounts) {
   const [ deployer, alice, bob ] = accounts;
 
@@ -51,17 +53,17 @@ contract("Dixel", function(accounts) {
       expect(await this.dixel.playerWallets(this.alicePlayerId)).to.be.bignumber.equal(alice);
     });
 
-    it("should increase pixels prices", async function() {
-      expect(this.pixel1.price).to.be.bignumber.equal(ether("1.05"));
-      expect(this.pixel2.price).to.be.bignumber.equal(ether("1.05"));
-    });
-
     it("should transfer tokens from alice", async function() {
-      expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether("97.9"));
+      expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether(String(100 - GENESIS_PRICE * 2)));
     });
 
     it("should transfer tokens to the base token contract (= burning)", async function() {
-      expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether("2.1"));
+      expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2)));
+    });
+
+    it("should increase pixels prices", async function() {
+      expect(this.pixel1.price).to.be.bignumber.equal(ether("1.05"));
+      expect(this.pixel2.price).to.be.bignumber.equal(ether("1.05"));
     });
 
     it("should have 2 player count", async function() {
@@ -72,7 +74,7 @@ contract("Dixel", function(accounts) {
       expectEvent(this.receipt, "UpdatePixels", {
         player: alice,
         pixelCount: '2',
-        totalPrice: ether('2.1')
+        totalPrice: ether(String(GENESIS_PRICE * 2))
       });
     });
 
@@ -93,23 +95,23 @@ contract("Dixel", function(accounts) {
         expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayerId);
       });
 
+      it("should transfer tokens from bob", async function() {
+        expect(await this.baseToken.balanceOf(bob)).to.be.bignumber.equal(ether(String(100 - GENESIS_PRICE * 1.05)));
+      });
+
       it("should increase pixels' price", async function() {
         expect(this.pixel1.price).to.be.bignumber.equal(ether("1.1025"));
       });
 
-      it("should transfer tokens from bob", async function() {
-        expect(await this.baseToken.balanceOf(bob)).to.be.bignumber.equal(ether("98.8975"));
-      });
-
       it("should transfer tokens to the base token contract (= burning)", async function() {
-        expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether("3.2025"));
+        expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 + GENESIS_PRICE * 1.05)));
       });
 
       it("should emit UpdatePixels event", async function() {
         expectEvent(this.receipt2, "UpdatePixels", {
           player: bob,
           pixelCount: '1',
-          totalPrice: ether('1.1025')
+          totalPrice: ether(String(GENESIS_PRICE * 1.05))
         });
       });
 
@@ -143,13 +145,9 @@ contract("Dixel", function(accounts) {
     });
 
     it('outputs last pixel status correctly', async function() {
-      const pixel1 = await this.nft.pixelHistory(0, 1, 1);
-      expect(pixel1).to.be.bignumber.equal("16711680");
-    });
-
-    it('outputs last pixel status correctly 2', async function() {
-      const pixel2 = await this.nft.pixelHistory(0, 2, 0);
-      expect(pixel2).to.be.bignumber.equal("65280");
+      const history = await this.nft.history(0);
+      expect(history.updatedPixelCount).to.be.bignumber.equal("2");
+      expect(history.mintingCost).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2)));
     });
 
     it('outputs all last pixels from history 0', async function() {

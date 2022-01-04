@@ -41,7 +41,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     address[] public playerWallets;
     mapping(address => uint32) public players;
 
-    event UpdatePixels(address player, uint16 pixelCount, uint224 totalPrice);
+    event UpdatePixels(address player, uint24 pixelCount, uint224 totalPrice);
 
     constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
@@ -81,17 +81,17 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
             pixel.color = params[i].color;
             pixel.owner = owner;
-            pixel.price = pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE;
-
             totalPrice += pixel.price;
+
+            pixel.price = pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE;
         }
 
         // Burn all tokens spent on creating a new edition of NFT
         require(baseToken.transferFrom(msgSender, address(baseToken), totalPrice), 'TOKEN_BURN_FAILED');
 
-        nft.mint(msgSender, getPixelColors());
+        nft.mint(msgSender, getPixelColors(), uint24(params.length), totalPrice);
 
-        emit UpdatePixels(msgSender, uint16(params.length), totalPrice);
+        emit UpdatePixels(msgSender, uint24(params.length), totalPrice);
     }
 
     function totalPlayerCount() external view returns (uint256) {

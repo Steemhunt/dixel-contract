@@ -28,12 +28,17 @@ contract DixelArt is
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
-    uint24[CANVAS_SIZE][CANVAS_SIZE][] public pixelHistory;
+    struct History {
+        uint24[CANVAS_SIZE][CANVAS_SIZE] pixels;
+        uint24 updatedPixelCount;
+        uint224 mintingCost;
+    }
+    History[] public history;
 
     constructor() ERC721("Dixel Collection", "dART") {}
 
     function getPixelsFor(uint256 tokenId) public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory) {
-        return pixelHistory[tokenId];
+        return history[tokenId].pixels;
     }
 
     function generateSVG(uint256 tokenId) external view returns (string memory) {
@@ -46,16 +51,17 @@ contract DixelArt is
 
     function generateJSON(uint256 tokenId) public view returns (string memory json) {
         json = string(abi.encodePacked(
-            '{"name": "Dixel Collection #',
+            '{"name":"Dixel Collection #',
             ColorUtils.uint2str(tokenId),
-            '","description": "A single art canvas where users can overwrite price-compounded pixels to generate fully on-chain NFT via dixel.club',
-            '","image": "',
+            '","description":"A single art canvas where users can overwrite price-compounded pixels to generate fully on-chain NFT via dixel.club',
+            '","updated_pixel_count":"',
+            ColorUtils.uint2str(history[tokenId].updatedPixelCount),
+            '","minting_cost":"',
+            ColorUtils.uint2str(history[tokenId].mintingCost),
+            '","image":"',
             generateBase64SVG(tokenId),
             '"}'
         ));
-
-        // TODO: Do we need other attributes?
-        // Refs: https://docs.opensea.io/docs/metadata-standards#attributes
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -64,12 +70,12 @@ contract DixelArt is
         return string(abi.encodePacked('data:application/json;base64,', Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) public onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint24 updatedPixelCount, uint224 mintingCost) public onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
         uint256 tokenId = _tokenIdTracker.current();
         _mint(to, tokenId);
-        pixelHistory.push(pixelColors);
+        history.push(History(pixelColors, updatedPixelCount, mintingCost));
         _tokenIdTracker.increment();
     }
 

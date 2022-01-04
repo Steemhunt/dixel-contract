@@ -9,25 +9,34 @@ import "./lib/Base64.sol";
 * @title Dixel SVG image generator
 */
 contract DixelSVGGenerator {
-  uint16 internal constant CANVAS_SIZE = 16; // 16 x 16 pixels
+    uint16 internal constant CANVAS_SIZE = 16; // 16 x 16 pixels
 
-  function _generateSVG(uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixels) internal pure returns (string memory) {
-      // TODO: Can we put these templates as constant instance vars to save gas?
-      string memory svg = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 640 640">';
+    function _generateSVG(uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixels) internal pure returns (string memory) {
+        // TODO: Can we put these templates as constant instance vars to save gas?
+        string memory svg = '<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 640 640"><rect id="p" width="40" height="40"/>';
 
-      for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-          for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-              svg = string(abi.encodePacked(
-                  svg,
-                  '<rect width="40" height="40" x="',
-                  ColorUtils.uint2str(x * 40),
-                  '" y="',
-                  ColorUtils.uint2str(y * 40),
-                  '" fill="#',
-                  ColorUtils.uint2hex(pixels[x][y]),
-                  '"/>'
-              ));
-          }
+        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+            svg = string(abi.encodePacked(
+                svg,
+                '<svg x="',
+                ColorUtils.uint2str(x * 40),
+                '">'
+            ));
+            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                svg = string(abi.encodePacked(
+                    svg,
+                    '<use href="#p" ',
+                    'y="',
+                    ColorUtils.uint2str(y * 40),
+                    '" fill="#',
+                    ColorUtils.uint2hex(pixels[x][y]),
+                    '"/>'
+                ));
+            }
+            svg = string(abi.encodePacked(
+                svg,
+                '</svg>'
+            ));
       }
 
       return string(abi.encodePacked(svg, '</svg>'));

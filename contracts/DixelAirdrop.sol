@@ -86,39 +86,39 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
 
     // MARK: - User accessible methods
 
-    function isWhiteList() public view returns (bool) {
-        Contribution memory c = userContributions[_msgSender()];
+    function isWhiteList(address wallet) public view returns (bool) {
+        Contribution memory c = userContributions[wallet];
 
         return c.nftContribution > 0 || c.mintClubContribution > 0;
     }
 
-    function airdropAmount() public view returns (uint256) {
-        Contribution memory c = userContributions[_msgSender()];
+    function airdropAmount(address wallet) public view returns (uint256) {
+        Contribution memory c = userContributions[wallet];
 
         return total.nftTotalAmount * c.nftContribution / total.nftTotalContribution +
             total.mintClubTotalAmount * c.mintClubContribution / total.mintClubTotalContribution;
     }
 
-    function claimableAmount() public view returns (uint256) {
-        if (!canClaim || hasClaimed()) {
+    function claimableAmount(address wallet) public view returns (uint256) {
+        if (!canClaim || hasClaimed(wallet)) {
             return 0;
         }
 
-        return airdropAmount();
+        return airdropAmount(wallet);
     }
 
-    function hasClaimed() public view returns (bool) {
-        return userContributions[_msgSender()].claimed;
+    function hasClaimed(address wallet) public view returns (bool) {
+        return userContributions[wallet].claimed;
     }
 
     function claim() external {
         require(canClaim, 'AIRDROP_HAS_NOT_STARTED_OR_FINISHED');
-        require(isWhiteList(), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
-        require(!hasClaimed(), 'ALREADY_CLAIMED');
+        require(isWhiteList(_msgSender()), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
+        require(!hasClaimed(_msgSender()), 'ALREADY_CLAIMED');
 
         // TODO: Refactor _msgSender() function to see if saving gas
 
-        uint256 amount = claimableAmount();
+        uint256 amount = claimableAmount(_msgSender());
 
         userContributions[_msgSender()].claimed = true;
         require(baseToken.transferFrom(address(this), _msgSender(), amount), 'TOKEN_TRANSFER_FAILED');

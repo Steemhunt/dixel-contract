@@ -58,32 +58,32 @@ contract("DixelAirdrop", function(accounts) {
   });
 
   it("alice should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount({ from: alice })).to.be.bignumber.equal(ether("3250"));
+    expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("3250"));
   });
 
   it("alice should have no claimable amount because airdrop is not started yet", async function() {
-    expect(await this.airdrop.claimableAmount({ from: alice })).to.be.bignumber.equal("0");
+    expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
   });
 
   it("bob should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount({ from: bob })).to.be.bignumber.equal(ether("7875"));
+    expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("7875"));
   });
 
   it("carol should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount({ from: carol })).to.be.bignumber.equal(ether("1875"));
+    expect(await this.airdrop.airdropAmount(carol)).to.be.bignumber.equal(ether("1875"));
   });
 
   it("dan should have no claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount({ from: dan })).to.be.bignumber.equal("0");
-    expect(await this.airdrop.claimableAmount({ from: dan })).to.be.bignumber.equal("0");
+    expect(await this.airdrop.airdropAmount(dan)).to.be.bignumber.equal("0");
+    expect(await this.airdrop.claimableAmount(dan)).to.be.bignumber.equal("0");
   });
 
   it("should return true on isWhiteList", async function() {
-    expect(await this.airdrop.isWhiteList({ from: alice })).to.equal(true);
+    expect(await this.airdrop.isWhiteList(alice)).to.equal(true);
   });
 
   it("should return false on hasClaimed", async function() {
-    expect(await this.airdrop.hasClaimed({ from: alice })).to.equal(false);
+    expect(await this.airdrop.hasClaimed(alice)).to.equal(false);
   });
 
   it("should prevent claim before starting", async function() {
@@ -100,12 +100,12 @@ contract("DixelAirdrop", function(accounts) {
     });
 
     it("should return true on hasClaimed", async function() {
-      expect(await this.airdrop.hasClaimed({ from: alice })).to.equal(true);
+      expect(await this.airdrop.hasClaimed(alice)).to.equal(true);
     });
 
     it("alice should have correct claimable amount", async function() {
-      expect(await this.airdrop.airdropAmount({ from: alice })).to.be.bignumber.equal(ether("3250"));
-      expect(await this.airdrop.claimableAmount({ from: alice })).to.be.bignumber.equal("0");
+      expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("3250"));
+      expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
     });
 
     it("should increase alice's balance", async function() {
@@ -141,8 +141,8 @@ contract("DixelAirdrop", function(accounts) {
       });
 
       it("bob should have correct claimable amount", async function() {
-        expect(await this.airdrop.airdropAmount({ from: bob })).to.be.bignumber.equal(ether("7875"));
-        expect(await this.airdrop.claimableAmount({ from: bob })).to.be.bignumber.equal("0");
+        expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("7875"));
+        expect(await this.airdrop.claimableAmount(bob)).to.be.bignumber.equal("0");
       });
 
       it("should revert on claim", async function() {

@@ -49,7 +49,6 @@ async function main() {
   await this.airdrop.addTokens(1, "10000000000000000000000"); // 10k
   await this.airdrop.addTokens(2, "3000000000000000000000"); // 3k
 
-
   // Add whitelist (only for testnet)
   const WHITELIST = [
     ['0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '100000000000000000000', '200000000000000000000'],

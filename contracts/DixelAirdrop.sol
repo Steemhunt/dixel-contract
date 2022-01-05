@@ -112,18 +112,18 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
     }
 
     function claim() external {
+        address msgSender = _msgSender();
+
         require(canClaim, 'AIRDROP_HAS_NOT_STARTED_OR_FINISHED');
-        require(isWhiteList(_msgSender()), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
-        require(!hasClaimed(_msgSender()), 'ALREADY_CLAIMED');
+        require(isWhiteList(msgSender), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
+        require(!hasClaimed(msgSender), 'ALREADY_CLAIMED');
 
-        // TODO: Refactor _msgSender() function to see if saving gas
+        uint256 amount = claimableAmount(msgSender);
 
-        uint256 amount = claimableAmount(_msgSender());
+        userContributions[msgSender].claimed = true;
+        require(baseToken.transferFrom(address(this), msgSender, amount), 'TOKEN_TRANSFER_FAILED');
 
-        userContributions[_msgSender()].claimed = true;
-        require(baseToken.transferFrom(address(this), _msgSender(), amount), 'TOKEN_TRANSFER_FAILED');
-
-        emit ClaimAirdrop(_msgSender(), amount);
+        emit ClaimAirdrop(msgSender, amount);
     }
 
 }

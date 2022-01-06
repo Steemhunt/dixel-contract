@@ -20,34 +20,37 @@ async function main() {
   await token.mint('0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '10000000000000000000000'); // 10k -tester 1
   await token.mint('0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '10000000000000000000000'); // 10k -tester 2
 
-  console.log(`Test token is deployed at ${token.address}`);
+  console.log(` -> Test token is deployed at ${token.address}`);
 
   // MARK: - Deploy NFT contract
   const DixelArt = await hre.ethers.getContractFactory('DixelArt');
   const nft = await DixelArt.deploy();
   await nft.deployed();
 
-  console.log(`DixelArt contract deployed at ${nft.address}`);
+  console.log(` -> DixelArt contract deployed at ${nft.address}`);
 
   // MARK: - Deploy contract
   const Dixel = await hre.ethers.getContractFactory('Dixel');
   const dixel = await Dixel.deploy(token.address, nft.address);
   await dixel.deployed();
 
-  console.log(`Dixel contract deployed at ${dixel.address}`);
+  console.log(` -> Dixel contract deployed at ${dixel.address}`);
 
   await nft.transferOwnership(dixel.address);
-  console.log(`DixelArt contract ownership has changed`);
+  console.log(` -> DixelArt contract ownership has changed`);
 
   // MARK: - Deploy Airdrop contract
   const DixelAirdrop = await hre.ethers.getContractFactory('DixelAirdrop');
   const airdrop = await DixelAirdrop.deploy(token.address);
   await airdrop.deployed();
 
-  console.log(`DixelAirdrop contract deployed at ${airdrop.address}`);
+  console.log(` -> DixelAirdrop contract deployed at ${airdrop.address}`);
 
-  await this.airdrop.addTokens(1, "10000000000000000000000"); // 10k
-  await this.airdrop.addTokens(2, "3000000000000000000000"); // 3k
+  await token.approve(airdrop.address, "999999999999999999999999999999999999999999999999");
+  await airdrop.addTokens(1, "10000000000000000000000", { gasLimit: 100000 });
+  await airdrop.addTokens(2, "3000000000000000000000", { gasLimit: 100000 });
+
+  console.log(` -> Airdrop tokens are added`)
 
   // Add whitelist (only for testnet)
   const WHITELIST = [
@@ -55,13 +58,19 @@ async function main() {
     ['0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '300000000000000000000', '100000000000000000000'],
     ['0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '0', '500000000000000000000'],
   ];
-  await airdrop.whitelist(WHITELIST);
+  await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
   console.log(`- DixelAirdrop: ${airdrop.address}`);
   console.log(`- DixelArt NFT: ${nft.address}`);
   console.log(`- Dixel contract: ${dixel.address}`);
+
+  console.log(`
+    npx hardhat verify --network bsctest ${airdrop.address} '${token.address}'
+    npx hardhat verify --network bsctest ${nft.address}
+    npx hardhat verify --network bsctest ${dixel.address} '${token.address}' '${nft.address}'
+  `);
 };
 
 main()
@@ -71,10 +80,8 @@ main()
     process.exit(1);
   });
 
+
 // npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
-// DixelAirdrpo
-// npx hardhat verify --network bsctest 0x3f26B11B4edf1BfE37CD4c5ef280FA55e5aE9fF3 '0xD60122dBd23348C84EFeF00856384f93aBCe23FF'
-// DixelArt
-// npx hardhat verify --network bsctest 0x30Aa35A94017447c992E862b5041d98C9d5eDe0e
-// Dixel, BaseToken, DixelArt
-// npx hardhat verify --network bsctest 0x804A01766428126d03560529cd376d86a199c1D6 '0xD60122dBd23348C84EFeF00856384f93aBCe23FF' '0x30Aa35A94017447c992E862b5041d98C9d5eDe0e'
+
+
+

@@ -19,9 +19,10 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
     DixelArt public nft;
 
-    uint200 private constant GENESIS_PRICE = 1e18; // Initial price: 1 DX
-    uint16 private constant PRICE_INCREASE_RATE = 500;
-    uint16 private constant MAX_RATE = 10000;
+    uint256 private constant GENESIS_PRICE = 1e18; // Initial price: 1 DIXEL
+    uint256 private constant PRICE_INCREASE_RATE = 500; // 5% price increase on over-writing
+    uint256 private constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
+    uint256 private constant MAX_RATE = 10000;
 
     struct Pixel {
         uint24 color; // 24bit integer (000000 - ffffff = 0 - 16777215)
@@ -41,7 +42,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     address[] public playerWallets;
     mapping(address => uint32) public players;
 
-    event UpdatePixels(address player, uint24 pixelCount, uint224 totalPrice);
+    event UpdatePixels(address player, uint16 pixelCount, uint96 totalPrice, uint96 rewardGenerated);
 
     constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
@@ -57,6 +58,11 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
                 pixels[x][y].price = GENESIS_PRICE;
             }
         }
+    }
+
+    // Approve token spending by this contract, should be called after construction
+    function initApprove() external onlyOwner {
+        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), 'APPROVE_FAILED');
     }
 
     function _getOrAddPlayerId(address wallet) private returns (uint32) {
@@ -75,7 +81,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         address msgSender = _msgSender();
         uint32 owner = _getOrAddPlayerId(msgSender);
 
-        uint224 totalPrice = 0;
+        uint256 totalPrice = 0;
         for (uint256 i = 0; i < params.length; i++) {
             Pixel storage pixel = pixels[params[i].x][params[i].y];
 
@@ -86,12 +92,16 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
             pixel.price = pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE;
         }
 
-        // Burn all tokens spent on creating a new edition of NFT
-        require(baseToken.transferFrom(msgSender, address(baseToken), totalPrice), 'TOKEN_BURN_FAILED');
+        // 10% goes to the contributor reward pools
+        uint256 reward = totalPrice * REWARD_RATE / MAX_RATE;
+        require(baseToken.transferFrom(msgSender, address(this), reward), 'REWARD_TRANSFER_FAILED');
 
-        nft.mint(msgSender, getPixelColors(), uint24(params.length), totalPrice);
+        // 90% goes to the NFT contract for refund on burn
+        require(baseToken.transferFrom(msgSender, address(nft), totalPrice - reward), 'RESERVE_TRANSFER_FAILED');
 
-        emit UpdatePixels(msgSender, uint24(params.length), totalPrice);
+        nft.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
+
+        emit UpdatePixels(msgSender, uint16(params.length), totalPrice, reward);
     }
 
     function totalPlayerCount() external view returns (uint256) {

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.10;
 
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
@@ -20,6 +21,7 @@ import "./DixelSVGGenerator.sol";
  */
 contract DixelArt is
     Context,
+    ERC721,
     ERC721Enumerable,
     Ownable,
     DixelSVGGenerator
@@ -35,6 +37,8 @@ contract DixelArt is
         uint96 reserveForRefund;
     }
     History[] public history;
+
+    event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
     constructor(address baseTokenAddress) ERC721("Dixel Collection", "dART") {
         baseToken = IERC20(baseTokenAddress);
@@ -93,12 +97,16 @@ contract DixelArt is
     }
 
     function burn(uint256 tokenId) public {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721Burnable: caller is not owner nor approved");
+        address msgSender = _msgSender();
+
+        require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");
 
         _burn(tokenId);
 
         // Refund reserve amount
-        require(baseToken.transfer(_msgSender(), history[tokenId].reserveForRefund), 'REFUND_FAILED');
+        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), 'REFUND_FAILED');
+
+        emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }
 
     // MARK: - External utility functions

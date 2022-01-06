@@ -18,7 +18,7 @@ contract("Dixel", function(accounts) {
     await this.baseToken.mint(alice, ether("100"));
     await this.baseToken.mint(bob, ether("100"));
 
-    this.nft = await DixelArt.new();
+    this.nft = await DixelArt.new(this.baseToken.address);
     this.dixel = await Dixel.new(this.baseToken.address, this.nft.address);
     await this.nft.transferOwnership(this.dixel.address); // Set owner as Dixel contract, so it can mint new NFTs
   });
@@ -36,7 +36,7 @@ contract("Dixel", function(accounts) {
 
       this.pixel1 = await this.dixel.pixels(1, 1);
       this.pixel2 = await this.dixel.pixels(2, 0);
-      this.alicePlayerId = await this.dixel.players(alice);
+      this.alicePlayer = await this.dixel.players(alice);
     });
 
     it("should update pixel colors", async function() {
@@ -45,20 +45,24 @@ contract("Dixel", function(accounts) {
     });
 
     it("should update owner of pixels", async function() {
-      expect(this.pixel1.owner).to.be.bignumber.equal(this.alicePlayerId);
-      expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayerId);
+      expect(this.pixel1.owner).to.be.bignumber.equal(this.alicePlayer.id);
+      expect(this.pixel2.owner).to.be.bignumber.equal(this.alicePlayer.id);
     });
 
     it("should add alice into playerWallets", async function() {
-      expect(await this.dixel.playerWallets(this.alicePlayerId)).to.be.bignumber.equal(alice);
+      expect(await this.dixel.playerWallets(this.alicePlayer.id)).to.be.bignumber.equal(alice);
     });
 
     it("should transfer tokens from alice", async function() {
       expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether(String(100 - GENESIS_PRICE * 2)));
     });
 
-    it("should transfer tokens to the base token contract (= burning)", async function() {
-      expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2)));
+    it("should transfer 90% of DIXEL tokens to the NFT contract for refund reserve", async function() {
+      expect(await this.baseToken.balanceOf(this.nft.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 * 0.9)));
+    });
+
+    it("should transfer 10% of DIXEL tokens to the Dixel contract for reward", async function() {
+      expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 * 0.1)));
     });
 
     it("should increase pixels prices", async function() {
@@ -84,7 +88,7 @@ contract("Dixel", function(accounts) {
         this.receipt2 = await this.dixel.updatePixels([[1, 1, 255]], 1, { from: bob }); // #0000ff
 
         this.pixel1 = await this.dixel.pixels(1, 1);
-        this.bobPlayerId = await this.dixel.players(bob);
+        this.bobPlayer = await this.dixel.players(bob);
       });
 
       it("should update pixel colors", async function() {
@@ -92,7 +96,7 @@ contract("Dixel", function(accounts) {
       });
 
       it("should update owner of pixels", async function() {
-        expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayerId);
+        expect(this.pixel1.owner).to.be.bignumber.equal(this.bobPlayer.id);
       });
 
       it("should transfer tokens from bob", async function() {
@@ -103,8 +107,12 @@ contract("Dixel", function(accounts) {
         expect(this.pixel1.price).to.be.bignumber.equal(ether("1.1025"));
       });
 
-      it("should transfer tokens to the base token contract (= burning)", async function() {
-        expect(await this.baseToken.balanceOf(this.baseToken.address)).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 + GENESIS_PRICE * 1.05)));
+      it("should transfer 90% of DIXEL tokens to the NFT contract for refund reserve", async function() {
+        expect(await this.baseToken.balanceOf(this.nft.address)).to.be.bignumber.equal(ether(String((GENESIS_PRICE * 2 + GENESIS_PRICE * 1.05) * 0.9)));
+      });
+
+      it("should transfer 10% of DIXEL tokens to the Dixel contract for reward", async function() {
+        expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(ether(String((GENESIS_PRICE * 2 + GENESIS_PRICE * 1.05) * 0.1)));
       });
 
       it("should emit UpdatePixels event", async function() {
@@ -120,6 +128,9 @@ contract("Dixel", function(accounts) {
       });
     });
   });
+
+  // TODO: claimableReward
+  // TODO: claim
 
   describe("generate SVG", function() {
     beforeEach(async function() {
@@ -147,7 +158,7 @@ contract("Dixel", function(accounts) {
     it('outputs last pixel status correctly', async function() {
       const history = await this.nft.history(0);
       expect(history.updatedPixelCount).to.be.bignumber.equal("2");
-      expect(history.mintingCost).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2)));
+      expect(history.reserveForRefund).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 * 0.9)));
     });
 
     it('outputs all last pixels from history 0', async function() {
@@ -185,5 +196,7 @@ contract("Dixel", function(accounts) {
       const testJSONBase64 = fs.readFileSync(`${__dirname}/fixtures/test-json-base64.txt`, 'utf8');
       expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);
     });
+
+    // TODO: Burn refund the reserve amount
   });
 });

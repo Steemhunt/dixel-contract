@@ -65,7 +65,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         canClaim = false;
 
         // Withdraw all leftover balance
-        require(baseToken.transferFrom(address(this), _msgSender(), baseToken.balanceOf(address(this))), 'TOKEN_TRANSFER_FAILED');
+        require(baseToken.transfer(_msgSender(), baseToken.balanceOf(address(this))), 'TOKEN_TRANSFER_FAILED');
     }
 
     function whitelist(WhiteListParams[] calldata params) external onlyOwner {

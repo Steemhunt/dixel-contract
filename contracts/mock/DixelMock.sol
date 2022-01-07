@@ -9,4 +9,8 @@ contract DixelMock is Dixel {
     bool public constant IS_MOCK = true; // Prevent the same bytecode produced by verifier
 
     constructor(address baseTokenAddress, address dixelArtAddress) Dixel(baseTokenAddress, dixelArtAddress) {}
+
+    function getAccRewardPerContribution() external view returns (uint256) {
+        return accRewardPerContribution;
+    }
 }

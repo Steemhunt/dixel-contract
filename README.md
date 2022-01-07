@@ -1,6 +1,14 @@
 # Dixel
 A single NFT canvas where users overwrite the previous edition with price-compounded pixels.
 
+1. There are 16x16 pixels universal canvas which anyone can overwrite
+2. Whenever a user overwrite a pixel, the price of pixel increases by 5% (Initial pixel price: 1 DIXEL)
+3. A new NFT edition with current canvas state will be minted to the updater (image data is encoded as SVG, 100% on-chain)
+4. Total cost that user paid to overwrite pixels goes to:
+  - 10% -> all contributors by their contribution count (total pixel count a user updated so far)
+  - 90% -> reserve for refund when the NFT gets burned
+5. If a user burn a NFT they own, reserve amount (DIXEL tokens) gets refunded to the user (90% of total minting cost)
+
 ## Run Tests
 ```bash
 npx hardhat test

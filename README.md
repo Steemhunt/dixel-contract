@@ -1,5 +1,5 @@
 # Dixel
-Crowd-sourced pixel art community
+A single NFT canvas where users overwrite the previous edition with price-compounded pixels.
 
 ## Run Tests
 ```bash

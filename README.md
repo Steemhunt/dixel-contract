@@ -9,8 +9,10 @@ npx hardhat test
 ## Contracts
 
 ### BSC Testnet
-- Test token: 0x29F750BD6854B43CB1eeF857452ddC29B9c6C5B5
-- Dixel contract: [0xfF202bfD9fd0E5817e7236215B4589b203a3Fcd7](https://testnet.bscscan.com/address/0xfF202bfD9fd0E5817e7236215B4589b203a3Fcd7#code)
+- Test token: 0x596b3f42C39aACbB405810D2011BB35b9142c330
+- DixelAirdrop: 0x7B0f17dC4A3Bb4AE1880fc195139B5d705e31224
+- DixelArt NFT: 0xebb0Ce00EBFAd67180a256aa9592E1a36A61a726
+- Dixel contract: 0x0737Ee66D587baB42b42D608C4Fe712B13bbC9f2
 
 ## Deploy
 ```bash

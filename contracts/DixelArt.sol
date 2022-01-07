@@ -35,6 +35,7 @@ contract DixelArt is
         uint24[CANVAS_SIZE][CANVAS_SIZE] pixels;
         uint16 updatedPixelCount;
         uint96 reserveForRefund;
+        bool burned;
     }
     History[] public history;
 
@@ -91,7 +92,7 @@ contract DixelArt is
         uint256 tokenId = _tokenIdTracker.current();
         _mint(to, tokenId);
 
-        history.push(History(pixelColors, updatedPixelCount, reserveForRefund));
+        history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
 
         _tokenIdTracker.increment();
     }
@@ -99,11 +100,13 @@ contract DixelArt is
     function burn(uint256 tokenId) public {
         address msgSender = _msgSender();
 
+        // This will also check `_exists(tokenId)`
         require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");
 
         _burn(tokenId);
 
         // Refund reserve amount
+        history[tokenId].burned = true;
         require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), 'REFUND_FAILED');
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);

@@ -304,71 +304,116 @@ contract("Dixel", function(accounts) {
     }); // Update again - bob
   });
 
-  // describe("generate SVG", function() {
-  //   beforeEach(async function() {
-  //     await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-  //     await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
-  //   });
+  describe("generate SVG", function() {
+    beforeEach(async function() {
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
+    });
 
-  //   it("should generate SVG correctly", async function() {
-  //     const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, 'utf8');
-  //     expect(await this.dixel.generateSVG()).to.equal(testSVG);
-  //   });
+    it("should generate SVG correctly", async function() {
+      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, 'utf8');
+      expect(await this.dixel.generateSVG()).to.equal(testSVG);
+    });
 
-  //   it("should encode SVG into Base64 correctly", async function() {
-  //     const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, 'utf8');
-  //     expect(await this.dixel.generateBase64SVG()).to.equal(testBase64);
-  //   });
-  // });
+    it("should encode SVG into Base64 correctly", async function() {
+      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, 'utf8');
+      expect(await this.dixel.generateBase64SVG()).to.equal(testBase64);
+    });
+  });
 
-  // describe("generate NFT", function() {
-  //   beforeEach(async function() {
-  //     await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-  //     this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
-  //   });
+  describe("generate NFT", function() {
+    beforeEach(async function() {
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
 
-  //   it('outputs last pixel status correctly', async function() {
-  //     const history = await this.nft.history(0);
-  //     expect(history.updatedPixelCount).to.be.bignumber.equal("2");
-  //     expect(history.reserveForRefund).to.be.bignumber.equal(ether(String(GENESIS_PRICE * 2 * 0.9)));
-  //   });
+      this.cost = GENESIS_PRICE.mul(new BN("2"));
+      this.reserveForRefund = this.cost.mul(new BN("9")).div(new BN("10"));
+    });
 
-  //   it('outputs all last pixels from history 0', async function() {
-  //     const pixels = await this.nft.getPixelsFor(0);
+    it("should increase total supply", async function() {
+      expect(await this.nft.totalSupply()).to.be.bignumber.equal("1");
+    });
 
-  //     expect(pixels[1][1]).to.be.bignumber.equal("16711680");
-  //     expect(pixels[2][0]).to.be.bignumber.equal("65280");
-  //     expect(pixels[2][2]).to.be.bignumber.equal("0");
-  //   });
+    it("should increase nextTokenId", async function() {
+      expect(await this.nft.nextTokenId()).to.be.bignumber.equal("1");
+    });
 
-  //   it('alice should have the nft balance', async function() {
-  //     expect(await this.nft.balanceOf(alice)).to.be.bignumber.equal("1");
-  //   });
+    it("outputs last pixel status correctly", async function() {
+      const history = await this.nft.history(0);
+      expect(history.updatedPixelCount).to.be.bignumber.equal("2");
+      expect(history.reserveForRefund).to.be.bignumber.equal(this.reserveForRefund);
+    });
 
-  //   it('alice should be the owner of the NFT', async function() {
-  //     expect(await this.nft.ownerOf(0)).to.equal(alice);
-  //   });
+    it("outputs all last pixels from history 0", async function() {
+      const pixels = await this.nft.getPixelsFor(0);
 
-  //   it("should outputs the SVG correctly", async function() {
-  //     const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, 'utf8');
-  //     expect(await this.nft.generateSVG(0)).to.equal(testSVG);
-  //   });
+      expect(pixels[1][1]).to.be.bignumber.equal("16711680");
+      expect(pixels[2][0]).to.be.bignumber.equal("65280");
+      expect(pixels[2][2]).to.be.bignumber.equal("0");
+    });
 
-  //   it("should outputs the SVG into Base64 correctly", async function() {
-  //     const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, 'utf8');
-  //     expect(await this.nft.generateBase64SVG(0)).to.equal(testBase64);
-  //   });
+    it("alice should have the nft balance", async function() {
+      expect(await this.nft.balanceOf(alice)).to.be.bignumber.equal("1");
+    });
 
-  //   it("should generate tokenURI in JSON format", async function() {
-  //     const testJSON = fs.readFileSync(`${__dirname}/fixtures/test-json.json`, 'utf8');
-  //     expect(await this.nft.generateJSON(0)).to.equal(testJSON);
-  //   });
+    it("alice should be the owner of the NFT", async function() {
+      expect(await this.nft.ownerOf(0)).to.equal(alice);
+    });
 
-  //   it("should outputs tokenURI correctly", async function() {
-  //     const testJSONBase64 = fs.readFileSync(`${__dirname}/fixtures/test-json-base64.txt`, 'utf8');
-  //     expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);
-  //   });
+    it("should outputs the SVG correctly", async function() {
+      const testSVG = fs.readFileSync(`${__dirname}/fixtures/test-image.svg`, "utf8");
+      expect(await this.nft.generateSVG(0)).to.equal(testSVG);
+    });
 
-  //   // TODO: Burn refund the reserve amount
-  // });
+    it("should outputs the SVG into Base64 correctly", async function() {
+      const testBase64 = fs.readFileSync(`${__dirname}/fixtures/test-image-base64.txt`, "utf8");
+      expect(await this.nft.generateBase64SVG(0)).to.equal(testBase64);
+    });
+
+    it("should generate tokenURI in JSON format", async function() {
+      const testJSON = fs.readFileSync(`${__dirname}/fixtures/test-json.json`, "utf8");
+      expect(await this.nft.generateJSON(0)).to.equal(testJSON);
+    });
+
+    it("should outputs tokenURI correctly", async function() {
+      const testJSONBase64 = fs.readFileSync(`${__dirname}/fixtures/test-json-base64.txt`, "utf8");
+      expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);
+    });
+
+    describe("burn", function() {
+      beforeEach(async function() {
+        this.receipt = await this.nft.burn(0, { from: alice });
+      });
+
+      it("should change the status to burned", async function() {
+        expect((await this.nft.history(0)).burned).to.equal(true);
+      });
+
+      it("should refund 90% of total cost on burning", async function() {
+        expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(
+          ALICE_BALANCE.sub(this.cost).add(this.reserveForRefund)
+        );
+      });
+
+      it("should emit Burn event", async function() {
+        expectEvent(this.receipt, "Burn", {
+          player: alice,
+          tokenId: '0',
+          refundAmount: this.reserveForRefund
+        });
+      });
+
+      it("should destroy the token", async function() {
+        expect((await this.nft.exists(0))).to.equal(false);
+      });
+
+      it("should decrease the total supply", async function() {
+        expect(await this.nft.totalSupply()).to.be.bignumber.equal("0");
+      });
+
+      it("should leave nextTokenId to the same", async function() {
+        expect(await this.nft.nextTokenId()).to.be.bignumber.equal("1");
+      });
+    }); // burn
+  }); // generate NFT
 });

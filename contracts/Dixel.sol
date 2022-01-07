@@ -43,8 +43,8 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint256 rewardDebt;
     }
 
-    uint256 totalContribution;
-    uint256 accRewardPerContribution;
+    uint256 public totalContribution;
+    uint256 internal accRewardPerContribution;
 
     // Fancy math here:
     //   - player.rewardDebt: Reward amount that should be deducted (the amount accumulated before I joined)
@@ -71,7 +71,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     mapping(address => Player) public players;
 
     event UpdatePixels(address player, uint16 pixelCount, uint96 totalPrice, uint96 rewardGenerated);
-    event ClaimReward(address player, uint256 amount);
+    event ClaimReward(address player, uint256 rewardAmount);
 
     constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
@@ -106,6 +106,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     }
 
     function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
+        require(params.length > 0, 'INVALID_PARAMS');
         require(params.length <= CANVAS_SIZE * CANVAS_SIZE, 'TOO_MANY_PIXELS');
         require(nextTokenId == nft.nextTokenId(), 'NFT_EDITION_NUMBER_MISMATCHED');
 
@@ -130,27 +131,42 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         // 90% goes to the NFT contract for refund on burn
         require(baseToken.transferFrom(msgSender, address(nft), totalPrice - reward), 'RESERVE_TRANSFER_FAILED');
 
-        nft.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
-
-        // Update stats for reward calculation
+        // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
         uint256 pendingReward = claimableReward(msgSender);
-        player.contribution += uint32(params.length);
-        totalContribution += params.length;
-        player.rewardDebt = accRewardPerContribution * player.contribution / 1e18 - pendingReward;
 
-        accRewardPerContribution += 1e18 * reward / totalContribution;
+        // Update acc values before updating contributions so players don't get rewards for their own penalties
+        if (totalContribution != 0) { // The first reward will be permanently locked on the contract
+            _increaseRewardPerContribution(reward);
+        }
+
+        totalContribution += params.length;
+        player.contribution += uint32(params.length);
+
+        // Update debt so user can only claim reward from after this event
+        player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
+
+        // Mint NFT to the user
+        nft.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
 
         emit UpdatePixels(msgSender, uint16(params.length), uint96(totalPrice), uint96(reward));
     }
 
     function totalPlayerCount() external view returns (uint256) {
-        return playerWallets.length;
+        return playerWallets.length - 1; // -1 for wallet[0] = baseToken (burn)
     }
 
     // MARK: - Reward by contributions
 
+    function _increaseRewardPerContribution(uint256 rewardAdded) private {
+        accRewardPerContribution += 1e18 * rewardAdded / totalContribution;
+    }
+
+    function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
+        return accRewardPerContribution * playerContribution / 1e18;
+    }
+
     function claimableReward(address wallet) public view returns (uint256) {
-        return accRewardPerContribution * players[wallet].contribution - players[wallet].rewardDebt;
+        return _totalPlayerRewardSoFar(players[wallet].contribution) - players[wallet].rewardDebt;
     }
 
     function claimReward() public {
@@ -161,7 +177,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
         Player storage player = players[msgSender];
         player.rewardClaimed += uint192(amount);
-        player.rewardDebt = accRewardPerContribution * player.contribution / 1e18; // claimable becomes 0
+        player.rewardDebt = _totalPlayerRewardSoFar(player.contribution); // claimable becomes 0
 
         require(baseToken.transfer(msgSender, amount), 'REWARD_TRANSFER_FAILED');
 

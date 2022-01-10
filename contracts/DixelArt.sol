@@ -45,11 +45,6 @@ contract DixelArt is
         baseToken = IERC20(baseTokenAddress);
     }
 
-    // Approve token spending by this contract, should be called after construction
-    function initApprove() external onlyOwner {
-        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), 'APPROVE_FAILED');
-    }
-
     function getPixelsFor(uint256 tokenId) public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory) {
         return history[tokenId].pixels;
     }

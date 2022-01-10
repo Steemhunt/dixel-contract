@@ -24,7 +24,7 @@ async function main() {
 
   // MARK: - Deploy NFT contract
   const DixelArt = await hre.ethers.getContractFactory('DixelArt');
-  const nft = await DixelArt.deploy();
+  const nft = await DixelArt.deploy(token.address);
   await nft.deployed();
 
   console.log(` -> DixelArt contract deployed at ${nft.address}`);
@@ -68,7 +68,7 @@ async function main() {
 
   console.log(`
     npx hardhat verify --network bsctest ${airdrop.address} '${token.address}'
-    npx hardhat verify --network bsctest ${nft.address}
+    npx hardhat verify --network bsctest ${nft.address} '${token.address}'
     npx hardhat verify --network bsctest ${dixel.address} '${token.address}' '${nft.address}'
   `);
 };

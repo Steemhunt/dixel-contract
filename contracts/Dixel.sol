@@ -89,11 +89,6 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
-    // Approve token spending by this contract, should be called after construction
-    function initApprove() external onlyOwner {
-        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), 'APPROVE_FAILED');
-    }
-
     function _getOrAddPlayer(address wallet) private returns (Player storage) {
         require(playerWallets.length < 0xffffffff, 'MAX_USER_REACHED');
 

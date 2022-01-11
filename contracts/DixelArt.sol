@@ -83,7 +83,7 @@ contract DixelArt is
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) public onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
         uint256 tokenId = _tokenIdTracker.current();
@@ -94,7 +94,7 @@ contract DixelArt is
         _tokenIdTracker.increment();
     }
 
-    function burn(uint256 tokenId) public {
+    function burn(uint256 tokenId) external {
         address msgSender = _msgSender();
 
         // This will also check `_exists(tokenId)`

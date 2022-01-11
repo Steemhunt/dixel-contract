@@ -10,10 +10,10 @@ import "./DixelSVGGenerator.sol";
 import "./DixelArt.sol";
 
 /**
-* @title Dixel
-*
-* Crowd-sourced pixel art community
-*/
+ * @title Dixel
+ *
+ * Crowd-sourced pixel art community
+ */
 contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
     DixelArt public dixelArt;
@@ -69,7 +69,12 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     address[] public playerWallets;
     mapping(address => Player) public players;
 
-    event UpdatePixels(address player, uint16 pixelCount, uint96 totalPrice, uint96 rewardGenerated);
+    event UpdatePixels(
+        address player,
+        uint16 pixelCount,
+        uint96 totalPrice,
+        uint96 rewardGenerated
+    );
     event ClaimReward(address player, uint256 rewardAmount);
 
     // solhint-disable-next-line func-visibility
@@ -81,10 +86,12 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         playerWallets.push(baseTokenAddress);
         players[baseTokenAddress].id = 0;
 
-        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-                // omit initial owner because default value 0 is correct
-                pixels[x][y].price = GENESIS_PRICE;
+        unchecked {
+            for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+                for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                    // omit initial owner because default value 0 is correct
+                    pixels[x][y].price = GENESIS_PRICE;
+                }
             }
         }
     }
@@ -100,10 +107,16 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         return players[wallet];
     }
 
-    function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
+    function updatePixels(PixelParams[] calldata params, uint256 nextTokenId)
+        external
+        nonReentrant
+    {
         require(params.length > 0, "INVALID_PARAMS");
         require(params.length <= CANVAS_SIZE * CANVAS_SIZE, "TOO_MANY_PIXELS");
-        require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
+        require(
+            nextTokenId == dixelArt.nextTokenId(),
+            "NFT_EDITION_NUMBER_MISMATCHED"
+        );
 
         address msgSender = _msgSender();
         Player storage player = _getOrAddPlayer(msgSender);
@@ -114,36 +127,68 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
             pixel.color = params[i].color;
             pixel.owner = player.id;
-            totalPrice += pixel.price;
+            unchecked {
+                totalPrice += pixel.price;
 
-            pixel.price = uint200(pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE);
+                pixel.price = uint200(
+                    pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE
+                );
+            }
         }
 
         // 10% goes to the contributor reward pools
-        uint256 reward = totalPrice * REWARD_RATE / MAX_RATE;
-        require(baseToken.transferFrom(msgSender, address(this), reward), "REWARD_TRANSFER_FAILED");
+        uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
+        require(
+            safeTransferFrom(baseToken, msgSender, address(this), reward),
+            "REWARD_TRANSFER_FAILED"
+        );
 
         // 90% goes to the NFT contract for refund on burn
-        require(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward), "RESERVE_TRANSFER_FAILED");
+        require(
+            safeTransferFrom(
+                baseToken,
+                msgSender,
+                address(dixelArt),
+                totalPrice - reward
+            ),
+            "RESERVE_TRANSFER_FAILED"
+        );
 
         // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
         uint256 pendingReward = claimableReward(msgSender);
 
         // Update acc values before updating contributions so players don't get rewards for their own penalties
-        if (totalContribution != 0) { // The first reward will be permanently locked on the contract
+        if (totalContribution != 0) {
+            // The first reward will be permanently locked on the contract
             _increaseRewardPerContribution(reward);
         }
 
-        totalContribution += params.length;
-        player.contribution += uint32(params.length);
+        unchecked {
+            totalContribution += params.length;
+            player.contribution += uint32(params.length);
+        }
 
         // Update debt so user can only claim reward from after this event
-        player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
+        unchecked {
+            player.rewardDebt =
+                _totalPlayerRewardSoFar(player.contribution) -
+                pendingReward;
 
-        // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
+            // Mint NFT to the user
+            dixelArt.mint(
+                msgSender,
+                getPixelColors(),
+                uint16(params.length),
+                uint96(totalPrice - reward)
+            );
+        }
 
-        emit UpdatePixels(msgSender, uint16(params.length), uint96(totalPrice), uint96(reward));
+        emit UpdatePixels(
+            msgSender,
+            uint16(params.length),
+            uint96(totalPrice),
+            uint96(reward)
+        );
     }
 
     function totalPlayerCount() external view returns (uint256) {
@@ -153,35 +198,53 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     // MARK: - Reward by contributions
 
     function _increaseRewardPerContribution(uint256 rewardAdded) private {
-        accRewardPerContribution += 1e18 * rewardAdded / totalContribution;
+        unchecked {
+            accRewardPerContribution +=
+                (1e18 * rewardAdded) /
+                totalContribution;
+        }
     }
 
-    function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
-        return accRewardPerContribution * playerContribution / 1e18;
+    function _totalPlayerRewardSoFar(uint32 playerContribution)
+        private
+        view
+        returns (uint256)
+    {
+        return (accRewardPerContribution * playerContribution) / 1e18;
     }
 
     function claimableReward(address wallet) public view returns (uint256) {
-        return _totalPlayerRewardSoFar(players[wallet].contribution) - players[wallet].rewardDebt;
+        return
+            _totalPlayerRewardSoFar(players[wallet].contribution) -
+            players[wallet].rewardDebt;
     }
 
     function claimReward() public {
         address msgSender = _msgSender();
-
         uint256 amount = claimableReward(msgSender);
         require(amount > 0, "NOTHING_TO_CLAIM");
 
         Player storage player = players[msgSender];
-        player.rewardClaimed += uint192(amount);
+        unchecked {
+            player.rewardClaimed += uint192(amount);
+        }
         player.rewardDebt = _totalPlayerRewardSoFar(player.contribution); // claimable becomes 0
 
-        require(baseToken.transfer(msgSender, amount), "REWARD_TRANSFER_FAILED");
+        require(
+            safeTransfer(baseToken, msgSender, amount),
+            "REWARD_TRANSFER_FAILED"
+        );
 
         emit ClaimReward(msgSender, amount);
     }
 
     // MARK: - Draw SVG
 
-    function getPixelColors() public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) {
+    function getPixelColors()
+        public
+        view
+        returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors)
+    {
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
             for (uint256 y = 0; y < CANVAS_SIZE; y++) {
                 pixelColors[x][y] = pixels[x][y].color;
@@ -189,7 +252,11 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
-    function getPixelOwners() public view returns (address[CANVAS_SIZE][CANVAS_SIZE] memory pixelOwners) {
+    function getPixelOwners()
+        public
+        view
+        returns (address[CANVAS_SIZE][CANVAS_SIZE] memory pixelOwners)
+    {
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
             for (uint256 y = 0; y < CANVAS_SIZE; y++) {
                 pixelOwners[x][y] = playerWallets[pixels[x][y].owner];
@@ -197,7 +264,11 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
-    function getPixelPrices() public view returns (uint200[CANVAS_SIZE][CANVAS_SIZE] memory pixelPrices) {
+    function getPixelPrices()
+        public
+        view
+        returns (uint200[CANVAS_SIZE][CANVAS_SIZE] memory pixelPrices)
+    {
         for (uint256 x = 0; x < CANVAS_SIZE; x++) {
             for (uint256 y = 0; y < CANVAS_SIZE; y++) {
                 pixelPrices[x][y] = pixels[x][y].price;
@@ -211,5 +282,106 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
     function generateBase64SVG() external view returns (string memory) {
         return _generateBase64SVG(getPixelColors());
+    }
+
+    /// @notice Modified from Gnosis
+    /// (https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2SafeERC20.sol)
+    function safeTransferFrom(
+        IERC20 tokenAddr,
+        address from,
+        address to,
+        uint256 amount
+    ) internal returns (bool success) {
+        assembly {
+            let freePointer := mload(0x40)
+            mstore(
+                freePointer,
+                0x23b872dd00000000000000000000000000000000000000000000000000000000
+            )
+            mstore(
+                add(freePointer, 4),
+                and(from, 0xffffffffffffffffffffffffffffffffffffffff)
+            )
+            mstore(
+                add(freePointer, 36),
+                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
+            )
+            mstore(add(freePointer, 68), amount)
+
+            let callStatus := call(gas(), tokenAddr, 0, freePointer, 100, 0, 0)
+
+            let returnDataSize := returndatasize()
+            if iszero(callStatus) {
+                // Copy the revert message into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Revert with the same message.
+                revert(0, returnDataSize)
+            }
+            switch returnDataSize
+            case 32 {
+                // Copy the return data into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Set success to whether it returned true.
+                success := iszero(iszero(mload(0)))
+            }
+            case 0 {
+                // There was no return data.
+                success := 1
+            }
+            default {
+                // It returned some malformed input.
+                success := 0
+            }
+        }
+    }
+
+    function safeTransfer(
+        IERC20 tokenAddr,
+        address to,
+        uint256 amount
+    ) internal returns (bool success) {
+        bool callStatus;
+
+        assembly {
+            let freePointer := mload(0x40)
+            mstore(
+                freePointer,
+                0xa9059cbb00000000000000000000000000000000000000000000000000000000
+            )
+            mstore(
+                add(freePointer, 4),
+                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
+            )
+            mstore(add(freePointer, 36), amount)
+
+            callStatus := call(gas(), tokenAddr, 0, freePointer, 68, 0, 0)
+
+            let returnDataSize := returndatasize()
+            if iszero(callStatus) {
+                // Copy the revert message into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Revert with the same message.
+                revert(0, returnDataSize)
+            }
+            switch returnDataSize
+            case 32 {
+                // Copy the return data into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Set success to whether it returned true.
+                success := iszero(iszero(mload(0)))
+            }
+            case 0 {
+                // There was no return data.
+                success := 1
+            }
+            default {
+                // It returned some malformed input.
+                success := 0
+            }
+        }
     }
 }

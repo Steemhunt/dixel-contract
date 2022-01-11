@@ -36,27 +36,28 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
 
     event ClaimAirdrop(address user, uint256 amount);
 
+    // solhint-disable-next-line func-visibility
     constructor(address baseTokenAddress) {
         baseToken = IERC20(baseTokenAddress);
     }
 
     function addTokens(uint8 airdropCategory, uint80 amount) external onlyOwner {
-        require(!canClaim, 'CANNOT_CHANGE_TOTAL_SHARE_DURING_CLAIMING');
-        require(airdropCategory == 1 || airdropCategory == 2, 'INVALID_CATEGORY');
+        require(!canClaim, "CANNOT_CHANGE_TOTAL_SHARE_DURING_CLAIMING");
+        require(airdropCategory == 1 || airdropCategory == 2, "INVALID_CATEGORY");
 
         if (airdropCategory == 1) {
-            require(baseToken.transferFrom(_msgSender(), address(this), amount), 'TOKEN_TRANSFER_FAILED');
+            require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
             total.nftTotalAmount += amount;
         }
 
         if (airdropCategory == 2) {
-            require(baseToken.transferFrom(_msgSender(), address(this), amount), 'TOKEN_TRANSFER_FAILED');
+            require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
             total.mintClubTotalAmount += amount;
         }
     }
 
     function startAirdrop() external onlyOwner {
-        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), 'APPROVE_FAILED');
+        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), "APPROVE_FAILED");
 
         canClaim = true;
     }
@@ -65,15 +66,15 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         canClaim = false;
 
         // Withdraw all leftover balance
-        require(baseToken.transfer(_msgSender(), baseToken.balanceOf(address(this))), 'TOKEN_TRANSFER_FAILED');
+        require(baseToken.transfer(_msgSender(), baseToken.balanceOf(address(this))), "TOKEN_TRANSFER_FAILED");
     }
 
     function whitelist(WhiteListParams[] calldata params) external onlyOwner {
-        require(!canClaim, 'CANNOT_ADD_WHITELIST_DURING_CLAIMING');
+        require(!canClaim, "CANNOT_ADD_WHITELIST_DURING_CLAIMING");
 
         for (uint256 i = 0; i < params.length; i++) {
-            require(userContributions[params[i].wallet].nftContribution == 0, 'DUPLICATED_RECORD');
-            require(userContributions[params[i].wallet].mintClubContribution == 0, 'DUPLICATED_RECORD');
+            require(userContributions[params[i].wallet].nftContribution == 0, "DUPLICATED_RECORD");
+            require(userContributions[params[i].wallet].mintClubContribution == 0, "DUPLICATED_RECORD");
 
             userContributions[params[i].wallet].nftContribution = params[i].nftContribution;
             userContributions[params[i].wallet].mintClubContribution = params[i].mintClubContribution;
@@ -114,14 +115,14 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
     function claim() external {
         address msgSender = _msgSender();
 
-        require(canClaim, 'AIRDROP_HAS_NOT_STARTED_OR_FINISHED');
-        require(isWhiteList(msgSender), 'NOT_INCLUDED_IN_THE_WHITE_LIST');
-        require(!hasClaimed(msgSender), 'ALREADY_CLAIMED');
+        require(canClaim, "AIRDROP_HAS_NOT_STARTED_OR_FINISHED");
+        require(isWhiteList(msgSender), "NOT_INCLUDED_IN_THE_WHITE_LIST");
+        require(!hasClaimed(msgSender), "ALREADY_CLAIMED");
 
         uint256 amount = claimableAmount(msgSender);
 
         userContributions[msgSender].claimed = true;
-        require(baseToken.transferFrom(address(this), msgSender, amount), 'TOKEN_TRANSFER_FAILED');
+        require(baseToken.transferFrom(address(this), msgSender, amount), "TOKEN_TRANSFER_FAILED");
 
         emit ClaimAirdrop(msgSender, amount);
     }

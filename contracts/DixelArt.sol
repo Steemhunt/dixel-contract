@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./lib/Base64.sol";
+import "base64-sol/base64.sol";
 import "./lib/ColorUtils.sol";
 import "./DixelSVGGenerator.sol";
 
@@ -24,8 +24,7 @@ contract DixelArt is
     ERC721,
     ERC721Enumerable,
     Ownable,
-    DixelSVGGenerator
-{
+    DixelSVGGenerator {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
@@ -41,6 +40,7 @@ contract DixelArt is
 
     event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
+    // solhint-disable-next-line func-visibility
     constructor(address baseTokenAddress) ERC721("Dixel Collection", "dART") {
         baseToken = IERC20(baseTokenAddress);
     }
@@ -61,6 +61,7 @@ contract DixelArt is
         // NOTE: We don't check token existence here,
         // so burnt tokens can also outputs this result unlike tokenURI function
 
+        /* solhint-disable quotes */
         json = string(abi.encodePacked(
             '{"name":"Dixel Collection #',
             ColorUtils.uint2str(tokenId),
@@ -73,12 +74,13 @@ contract DixelArt is
             generateBase64SVG(tokenId),
             '"}'
         ));
+        /* solhint-enable quotes */
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        return string(abi.encodePacked('data:application/json;base64,', Base64.encode(bytes(generateJSON(tokenId)))));
+        return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
     function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) public onlyOwner {
@@ -102,7 +104,7 @@ contract DixelArt is
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), 'REFUND_FAILED');
+        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }

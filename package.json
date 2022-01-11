@@ -9,7 +9,7 @@
   "author": "Sebastian Kim",
   "license": "BSD-3-Clause",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-solhint": "^2.0.0",
     "@nomiclabs/hardhat-truffle5": "^2.0.3",
@@ -20,11 +20,11 @@
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.5.2",
-    "hardhat": "^2.7.1",
-    "hardhat-gas-reporter": "^1.0.6",
+    "ethers": "^5.5.3",
+    "hardhat": "^2.8.2",
+    "hardhat-gas-reporter": "^1.0.7",
     "solidity-coverage": "^0.7.17",
     "web3": "^1.6.1",
-    "yargs": "^17.3.0"
+    "yargs": "^17.3.1"
   }
 }

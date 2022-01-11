@@ -53,12 +53,12 @@ async function main() {
   console.log(` -> Airdrop tokens are added`)
 
   // Add whitelist (only for testnet)
-  const WHITELIST = [
-    ['0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '100000000000000000000', '200000000000000000000'],
-    ['0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '300000000000000000000', '100000000000000000000'],
-    ['0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '0', '500000000000000000000'],
-  ];
-  await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
+  // const WHITELIST = [
+  //   ['0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '100000000000000000000', '200000000000000000000'],
+  //   ['0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '300000000000000000000', '100000000000000000000'],
+  //   ['0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '0', '500000000000000000000'],
+  // ];
+  // await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);

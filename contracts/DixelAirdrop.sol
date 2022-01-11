@@ -48,9 +48,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         if (airdropCategory == 1) {
             total.nftTotalAmount += amount;
             require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
-        }
-
-        if (airdropCategory == 2) {
+        } else if (airdropCategory == 2) {
             total.mintClubTotalAmount += amount;
             require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
         }

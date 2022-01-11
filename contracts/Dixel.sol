@@ -109,8 +109,17 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         Player storage player = _getOrAddPlayer(msgSender);
 
         uint256 totalPrice = 0;
+        uint8 prevX = 0;
+        uint8 prevY = 0;
         for (uint256 i = 0; i < params.length; i++) {
-            Pixel storage pixel = pixels[params[i].x][params[i].y];
+            uint8 x = params[i].x;
+            uint8 y = params[i].y;
+            require(prevX * CANVAS_SIZE + prevY < x * CANVAS_SIZE + y, "INVALID_PIXEL_PARAMS");
+
+            prevX = x;
+            prevY = y;
+
+            Pixel storage pixel = pixels[x][y];
 
             pixel.color = params[i].color;
             pixel.owner = player.id;

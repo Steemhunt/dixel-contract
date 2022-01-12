@@ -114,12 +114,14 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         unchecked {
             for (uint256 i = 0; i < params.length; i++) {
                 Pixel storage pixel = pixels[params[i].x][params[i].y];
+                uint200 oldPrice = pixel.price;
 
                 pixel.color = params[i].color;
                 pixel.owner = player.id;
-                totalPrice += pixel.price;
+                totalPrice += oldPrice;
 
-                pixel.price = uint200(pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE);
+                pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
+                require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
             }
         }
 

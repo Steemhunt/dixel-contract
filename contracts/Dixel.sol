@@ -127,10 +127,10 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
         // 10% goes to the contributor reward pools
         uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
-        assert(safeTransferFrom(baseToken, msgSender, address(this), reward));
+        assert(baseToken.transferFrom(msgSender, address(this), reward));
 
         // 90% goes to the NFT contract for refund on burn
-        assert(safeTransferFrom(baseToken, msgSender, address(dixelArt), totalPrice - reward));
+        assert(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward));
 
         // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
         uint256 pendingReward = claimableReward(msgSender);
@@ -185,7 +185,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
         player.rewardDebt = _totalPlayerRewardSoFar(player.contribution); // claimable becomes 0
 
-        require(safeTransfer(baseToken, msgSender, amount), "REWARD_TRANSFER_FAILED");
+        assert(baseToken.transfer(msgSender, amount));
 
         emit ClaimReward(msgSender, amount);
     }
@@ -222,106 +222,5 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
     function generateBase64SVG() external view returns (string memory) {
         return _generateBase64SVG(getPixelColors());
-    }
-
-    /// @notice Modified from Gnosis
-    /// (https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2SafeERC20.sol)
-    function safeTransferFrom(
-        IERC20 tokenAddr,
-        address from,
-        address to,
-        uint256 amount
-    ) internal returns (bool success) {
-        assembly {
-            let freePointer := mload(0x40)
-            mstore(
-                freePointer,
-                0x23b872dd00000000000000000000000000000000000000000000000000000000
-            )
-            mstore(
-                add(freePointer, 4),
-                and(from, 0xffffffffffffffffffffffffffffffffffffffff)
-            )
-            mstore(
-                add(freePointer, 36),
-                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
-            )
-            mstore(add(freePointer, 68), amount)
-
-            let callStatus := call(gas(), tokenAddr, 0, freePointer, 100, 0, 0)
-
-            let returnDataSize := returndatasize()
-            if iszero(callStatus) {
-                // Copy the revert message into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Revert with the same message.
-                revert(0, returnDataSize)
-            }
-            switch returnDataSize
-            case 32 {
-                // Copy the return data into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Set success to whether it returned true.
-                success := iszero(iszero(mload(0)))
-            }
-            case 0 {
-                // There was no return data.
-                success := 1
-            }
-            default {
-                // It returned some malformed input.
-                success := 0
-            }
-        }
-    }
-
-    function safeTransfer(
-        IERC20 tokenAddr,
-        address to,
-        uint256 amount
-    ) internal returns (bool success) {
-        bool callStatus;
-
-        assembly {
-            let freePointer := mload(0x40)
-            mstore(
-                freePointer,
-                0xa9059cbb00000000000000000000000000000000000000000000000000000000
-            )
-            mstore(
-                add(freePointer, 4),
-                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
-            )
-            mstore(add(freePointer, 36), amount)
-
-            callStatus := call(gas(), tokenAddr, 0, freePointer, 68, 0, 0)
-
-            let returnDataSize := returndatasize()
-            if iszero(callStatus) {
-                // Copy the revert message into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Revert with the same message.
-                revert(0, returnDataSize)
-            }
-            switch returnDataSize
-            case 32 {
-                // Copy the return data into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Set success to whether it returned true.
-                success := iszero(iszero(mload(0)))
-            }
-            case 0 {
-                // There was no return data.
-                success := 1
-            }
-            default {
-                // It returned some malformed input.
-                success := 0
-            }
-        }
     }
 }

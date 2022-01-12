@@ -91,7 +91,7 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        require(safeTransfer(baseToken, msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
+        assert(baseToken.transfer(msgSender, history[tokenId].reserveForRefund));
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }
@@ -114,53 +114,5 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
             interfaceId == type(IERC721).interfaceId ||
             interfaceId == type(IERC721Enumerable).interfaceId ||
             interfaceId == type(IERC173).interfaceId;
-    }
-
-    function safeTransfer(
-        IERC20 tokenAddr,
-        address to,
-        uint256 amount
-    ) internal returns (bool success) {
-        bool callStatus;
-
-        assembly {
-            let freePointer := mload(0x40)
-            mstore(
-                freePointer,
-                0xa9059cbb00000000000000000000000000000000000000000000000000000000
-            )
-            mstore(
-                add(freePointer, 4),
-                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
-            )
-            mstore(add(freePointer, 36), amount)
-
-            callStatus := call(gas(), tokenAddr, 0, freePointer, 68, 0, 0)
-
-            let returnDataSize := returndatasize()
-            if iszero(callStatus) {
-                // Copy the revert message into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Revert with the same message.
-                revert(0, returnDataSize)
-            }
-            switch returnDataSize
-            case 32 {
-                // Copy the return data into memory.
-                returndatacopy(0, 0, returnDataSize)
-
-                // Set success to whether it returned true.
-                success := iszero(iszero(mload(0)))
-            }
-            case 0 {
-                // There was no return data.
-                success := 1
-            }
-            default {
-                // It returned some malformed input.
-                success := 0
-            }
-        }
     }
 }

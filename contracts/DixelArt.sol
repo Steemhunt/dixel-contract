@@ -91,7 +91,7 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        require(safeTransfer(baseToken, msgSender, history[tokenId].reserveForRefund),"REFUND_FAILED");
+        require(safeTransfer(baseToken, msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }

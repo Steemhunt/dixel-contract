@@ -111,24 +111,24 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         Player storage player = _getOrAddPlayer(msgSender);
 
         uint256 totalPrice = 0;
-        for (uint256 i = 0; i < params.length; i++) {
-            Pixel storage pixel = pixels[params[i].x][params[i].y];
+        unchecked {
+            for (uint256 i = 0; i < params.length; i++) {
+                Pixel storage pixel = pixels[params[i].x][params[i].y];
 
-            pixel.color = params[i].color;
-            pixel.owner = player.id;
-            unchecked {
-                totalPrice += pixel.price;
+                pixel.color = params[i].color;
+                pixel.owner = player.id;
+                    totalPrice += pixel.price;
 
-                pixel.price = uint200(pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE);
+                    pixel.price = uint200(pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE);
             }
         }
 
         // 10% goes to the contributor reward pools
         uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
-        require(baseToken.transferFrom(msgSender, address(this), reward), "REWARD_TRANSFER_FAILED");
+        assert(safeTransferFrom(baseToken, msgSender, address(this), reward));
 
         // 90% goes to the NFT contract for refund on burn
-        require(safeTransferFrom(baseToken, msgSender, address(dixelArt), totalPrice - reward),"RESERVE_TRANSFER_FAILED");
+        assert(safeTransferFrom(baseToken, msgSender, address(dixelArt), totalPrice - reward));
 
         // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
         uint256 pendingReward = claimableReward(msgSender);
@@ -141,9 +141,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         unchecked {
             totalContribution += params.length;
             player.contribution += uint32(params.length);
-        }
 
-        unchecked {
             // Update debt so user can only claim reward from after this event
             player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
 

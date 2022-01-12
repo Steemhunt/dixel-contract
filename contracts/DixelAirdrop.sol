@@ -82,9 +82,11 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
             userContributions[params[i].wallet].nftContribution = params[i].nftContribution;
             userContributions[params[i].wallet].mintClubContribution = params[i].mintClubContribution;
 
-            total.nftTotalContribution += params[i].nftContribution;
-            total.mintClubTotalContribution += params[i].mintClubContribution;
-            total.whiteListCount += 1;
+            unchecked {
+                total.nftTotalContribution += params[i].nftContribution;
+                total.mintClubTotalContribution += params[i].mintClubContribution;
+                total.whiteListCount += 1;
+            }
         }
     }
 

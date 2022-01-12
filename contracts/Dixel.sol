@@ -117,9 +117,9 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
                 pixel.color = params[i].color;
                 pixel.owner = player.id;
-                    totalPrice += pixel.price;
+                totalPrice += pixel.price;
 
-                    pixel.price = uint200(pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE);
+                pixel.price = uint200(pixel.price + (pixel.price * PRICE_INCREASE_RATE) / MAX_RATE);
             }
         }
 

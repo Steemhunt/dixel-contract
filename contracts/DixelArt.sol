@@ -2,11 +2,9 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownership, IERC173} from "@beandao/contracts/library/Ownership.sol";
+import {ERC721, IERC721, IERC721Enumerable} from "@beandao/contracts/library/ERC721.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "base64-sol/base64.sol";
 import "./lib/ColorUtils.sol";
@@ -19,15 +17,7 @@ import "./DixelSVGGenerator.sol";
  *  - a owner (Dixel contract) that allows for token minting (creation)
  *  - token ID and URI autogeneration
  */
-contract DixelArt is
-    Context,
-    ERC721,
-    ERC721Enumerable,
-    Ownable,
-    DixelSVGGenerator {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIdTracker;
-
+contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
     IERC20 public baseToken;
 
     struct History {
@@ -41,7 +31,9 @@ contract DixelArt is
     event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
     // solhint-disable-next-line func-visibility
-    constructor(address baseTokenAddress) ERC721("Dixel Collection", "dART") {
+    constructor(address baseTokenAddress) {
+        name = "Dixel Collection";
+        symbol = "dART";
         baseToken = IERC20(baseTokenAddress);
     }
 
@@ -84,19 +76,14 @@ contract DixelArt is
     }
 
     function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
-        // We cannot just use balanceOf to create the new tokenId because tokens
-        // can be burned (destroyed), so we need a separate counter.
-        uint256 tokenId = _tokenIdTracker.current();
+        uint256 tokenId = _nextId();
         _mint(to, tokenId);
 
         history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
-
-        _tokenIdTracker.increment();
     }
 
     function burn(uint256 tokenId) external {
         address msgSender = _msgSender();
-
         // This will also check `_exists(tokenId)`
         require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");
 
@@ -104,7 +91,7 @@ contract DixelArt is
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
+        require(safeTransfer(baseToken, msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }
@@ -112,7 +99,7 @@ contract DixelArt is
     // MARK: - External utility functions
 
     function nextTokenId() external view returns (uint256) {
-        return _tokenIdTracker.current();
+        return _nextId();
     }
 
     function exists(uint256 tokenId) external view returns (bool) {
@@ -122,20 +109,58 @@ contract DixelArt is
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        return
+            interfaceId == type(IERC721).interfaceId ||
+            interfaceId == type(IERC721Enumerable).interfaceId ||
+            interfaceId == type(IERC173).interfaceId;
     }
 
-    function _beforeTokenTransfer(
-        address from,
+    function safeTransfer(
+        IERC20 tokenAddr,
         address to,
-        uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        uint256 amount
+    ) internal returns (bool success) {
+        bool callStatus;
+
+        assembly {
+            let freePointer := mload(0x40)
+            mstore(
+                freePointer,
+                0xa9059cbb00000000000000000000000000000000000000000000000000000000
+            )
+            mstore(
+                add(freePointer, 4),
+                and(to, 0xffffffffffffffffffffffffffffffffffffffff)
+            )
+            mstore(add(freePointer, 36), amount)
+
+            callStatus := call(gas(), tokenAddr, 0, freePointer, 68, 0, 0)
+
+            let returnDataSize := returndatasize()
+            if iszero(callStatus) {
+                // Copy the revert message into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Revert with the same message.
+                revert(0, returnDataSize)
+            }
+            switch returnDataSize
+            case 32 {
+                // Copy the return data into memory.
+                returndatacopy(0, 0, returnDataSize)
+
+                // Set success to whether it returned true.
+                success := iszero(iszero(mload(0)))
+            }
+            case 0 {
+                // There was no return data.
+                success := 1
+            }
+            default {
+                // It returned some malformed input.
+                success := 0
+            }
+        }
     }
 }

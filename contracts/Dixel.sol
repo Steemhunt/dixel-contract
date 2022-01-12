@@ -111,14 +111,14 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint256 totalPrice = 0;
         for (uint256 i = 0; i < params.length; i++) {
             Pixel storage pixel = pixels[params[i].x][params[i].y];
-            uint200 price = pixel.price;
+            uint200 oldPrice = pixel.price;
 
             pixel.color = params[i].color;
             pixel.owner = player.id;
-            totalPrice += price;
+            totalPrice += oldPrice;
 
-            pixel.price = uint200(price + price * PRICE_INCREASE_RATE / MAX_RATE);
-            require(pixel.price > price, "MAX_PRICE_REACHED");
+            pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
+            require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
         }
 
         // 10% goes to the contributor reward pools

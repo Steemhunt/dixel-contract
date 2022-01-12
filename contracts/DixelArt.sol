@@ -2,8 +2,10 @@
 
 pragma solidity ^0.8.10;
 
-import {Ownership, IERC173} from "@beandao/contracts/library/Ownership.sol";
-import {ERC721, IERC721, IERC721Enumerable} from "@beandao/contracts/library/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "base64-sol/base64.sol";
@@ -17,7 +19,10 @@ import "./DixelSVGGenerator.sol";
  *  - a owner (Dixel contract) that allows for token minting (creation)
  *  - token ID and URI autogeneration
  */
-contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
+contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerator {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIdTracker;
+
     IERC20 public baseToken;
 
     struct History {
@@ -31,9 +36,7 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
     event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
     // solhint-disable-next-line func-visibility
-    constructor(address baseTokenAddress) {
-        name = "Dixel Collection";
-        symbol = "dART";
+    constructor(address baseTokenAddress) ERC721("Dixel Collection", "dART") {
         baseToken = IERC20(baseTokenAddress);
     }
 
@@ -76,10 +79,14 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
     }
 
     function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
-        uint256 tokenId = _nextId();
+        // We cannot just use balanceOf to create the new tokenId because tokens
+        // can be burned (destroyed), so we need a separate counter.
+        uint256 tokenId = _tokenIdTracker.current();
         _mint(to, tokenId);
 
         history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
+
+        _tokenIdTracker.increment();
     }
 
     function burn(uint256 tokenId) external {
@@ -99,7 +106,7 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
     // MARK: - External utility functions
 
     function nextTokenId() external view returns (uint256) {
-        return _nextId();
+        return _tokenIdTracker.current();
     }
 
     function exists(uint256 tokenId) external view returns (bool) {
@@ -109,10 +116,11 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return
-            interfaceId == type(IERC721).interfaceId ||
-            interfaceId == type(IERC721Enumerable).interfaceId ||
-            interfaceId == type(IERC173).interfaceId;
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC721, ERC721Enumerable) {
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 }

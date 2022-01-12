@@ -62,6 +62,8 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
 
     function startAirdrop() external onlyOwner {
         canClaim = true;
+
+        require(baseToken.approve(address(this), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff), "APPROVE_FAILED");
     }
 
     function closeAirdrop() external onlyOwner {

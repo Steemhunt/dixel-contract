@@ -75,19 +75,14 @@ contract DixelArt is Context, ERC721, Ownership, DixelSVGGenerator {
          return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(
-        address to,
-        uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors,
-        uint16 updatedPixelCount,
-        uint96 reserveForRefund
-    ) public onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
         uint256 tokenId = _nextId();
         _mint(to, tokenId);
 
         history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
     }
 
-    function burn(uint256 tokenId) public {
+    function burn(uint256 tokenId) external {
         address msgSender = _msgSender();
         // This will also check `_exists(tokenId)`
         require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");

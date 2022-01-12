@@ -5,8 +5,8 @@ A single NFT canvas where users overwrite the previous edition with price-compou
 2. Whenever a user overwrites a pixel, the price of the pixel increases by 5% (Initial pixel price: 1 DIXEL)
 3. A new NFT edition with the current canvas state will be minted to the updater (image data is encoded as SVG, 100% on-chain)
 4. Total cost that user paid to overwrite pixels goes to:
-  - 10% -> all contributors proportional to their contribution count (total pixel count a user has updated so far)
-  - 90% -> reserve for refund when the NFT gets burned
+    - 10% -> all contributors proportional to their contribution count (total pixel count a user has updated so far)
+    - 90% -> reserve for refund when the NFT gets burned
 5. If a user burn a NFT they own, reserve amount (DIXEL tokens) gets refunded to the user (90% of total minting cost)
 
 ## Run Tests
@@ -37,17 +37,17 @@ npx hardhat verify --network bscmain {contract address} "parameter 1" "parameter
 ·-------------------------------------------------|---------------------------|--------------|-----------------------------·
 |              Solc version: 0.8.10               ·  Optimizer enabled: true  ·  Runs: 1500  ·  Block limit: 60000000 gas  │
 ··················································|···························|··············|······························
-|  Methods                                        ·                1 gwei/gas                ·       3113.87 usd/eth       │
+|  Methods                                        ·                1 gwei/gas                ·       3119.53 usd/eth       │
 ····························|·····················|·············|·············|··············|···············|··············
 |  Contract                 ·  Method             ·  Min        ·  Max        ·  Avg         ·  # calls      ·  usd (avg)  │
 ····························|·····················|·············|·············|··············|···············|··············
-|  DixelAirdrop             ·  addTokens          ·      69360  ·      91316  ·       80338  ·           46  ·       0.25  │
+|  DixelAirdrop             ·  addTokens          ·      69381  ·      91305  ·       80343  ·           46  ·       0.25  │
 ····························|·····················|·············|·············|··············|···············|··············
 |  DixelAirdrop             ·  claim              ·          -  ·          -  ·       85131  ·            9  ·       0.27  │
 ····························|·····················|·············|·············|··············|···············|··············
 |  DixelAirdrop             ·  closeAirdrop       ·          -  ·          -  ·       59736  ·            3  ·       0.19  │
 ····························|·····················|·············|·············|··············|···············|··············
-|  DixelAirdrop             ·  startAirdrop       ·          -  ·          -  ·       56134  ·            9  ·       0.17  │
+|  DixelAirdrop             ·  startAirdrop       ·          -  ·          -  ·       56037  ·            9  ·       0.17  │
 ····························|·····················|·············|·············|··············|···············|··············
 |  DixelAirdrop             ·  whitelist          ·          -  ·          -  ·      201854  ·           23  ·       0.63  │
 ····························|·····················|·············|·············|··············|···············|··············
@@ -67,12 +67,12 @@ npx hardhat verify --network bscmain {contract address} "parameter 1" "parameter
 ··················································|·············|·············|··············|···············|··············
 |  ColorUtilsMock                                 ·          -  ·          -  ·      298677  ·        0.5 %  ·       0.93  │
 ··················································|·············|·············|··············|···············|··············
-|  DixelAirdrop                                   ·    1400546  ·    1400558  ·     1400557  ·        2.3 %  ·       4.36  │
+|  DixelAirdrop                                   ·    1339634  ·    1339646  ·     1339645  ·        2.2 %  ·       4.18  │
 ··················································|·············|·············|··············|···············|··············
-|  DixelArt                                       ·    2822095  ·    2822119  ·     2822118  ·        4.7 %  ·       8.79  │
+|  DixelArt                                       ·    2822083  ·    2822107  ·     2822106  ·        4.7 %  ·       8.80  │
 ··················································|·············|·············|··············|···············|··············
-|  DixelMock                                      ·    7750764  ·    7750788  ·     7750786  ·       12.9 %  ·      24.13  │
+|  DixelMock                                      ·    7750764  ·    7750788  ·     7750786  ·       12.9 %  ·      24.18  │
 ··················································|·············|·············|··············|···············|··············
-|  ERC20PresetMinterPauser                        ·          -  ·          -  ·     1951544  ·        3.3 %  ·       6.08  │
+|  ERC20PresetMinterPauser                        ·          -  ·          -  ·     1951544  ·        3.3 %  ·       6.09  │
 ·-------------------------------------------------|-------------|-------------|--------------|---------------|-------------·
 ```

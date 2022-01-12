@@ -167,7 +167,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     }
 
     function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
-         return (accRewardPerContribution * playerContribution) / 1e18;
+        return (accRewardPerContribution * playerContribution) / 1e18;
     }
 
     function claimableReward(address wallet) public view returns (uint256) {

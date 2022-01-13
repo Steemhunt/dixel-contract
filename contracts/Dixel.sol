@@ -122,6 +122,8 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
                 prevY = params[i].y;
 
                 Pixel storage pixel = pixels[params[i].x][params[i].y];
+                // compare old color with incoming color
+                require(pixel.color != params[i].color, "UNCHANGED_PIXEL_COLORS");
                 uint200 oldPrice = pixel.price;
 
                 pixel.color = params[i].color;

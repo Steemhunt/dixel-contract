@@ -15,7 +15,7 @@ contract DixelMock is Dixel {
         return accRewardPerContribution;
     }
 
-    function updatePixelsOriginal(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
+    function updatePixelsOriginal(IPixelParams.PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
         require(params.length > 0 && params.length <= CANVAS_SIZE * CANVAS_SIZE, "INVALID_PIXEL_PARAMS");
         require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
 
@@ -50,12 +50,12 @@ contract DixelMock is Dixel {
         (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
+        dixelArt.mint(msgSender, params, updatedPixelCount, reserveForRefund);
 
         emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
     }
 
-    function updatePixelsNoChecks(PixelParams[] calldata params, uint256 nextTokenId) external {
+    function updatePixelsNoChecks(IPixelParams.PixelParams[] calldata params, uint256 nextTokenId) external {
         require(params.length > 0 && params.length <= CANVAS_SIZE * CANVAS_SIZE, "INVALID_PIXEL_PARAMS");
         require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
 
@@ -79,7 +79,7 @@ contract DixelMock is Dixel {
         (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
+        dixelArt.mint(msgSender, params, updatedPixelCount, reserveForRefund);
 
         emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
     }

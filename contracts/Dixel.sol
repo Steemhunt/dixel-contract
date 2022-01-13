@@ -123,20 +123,17 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
                 Pixel storage pixel = pixels[params[i].x][params[i].y];
                 // compare old color with incoming color
-                if(pixel.color != params[i].color) {
-                    uint200 oldPrice = pixel.price;
+                require(pixel.color != params[i].color, "UNCHANGED_PIXEL_COLORS");
+                uint200 oldPrice = pixel.price;
 
-                    pixel.color = params[i].color;
-                    pixel.owner = player.id;
-                    totalPrice += oldPrice;
+                pixel.color = params[i].color;
+                pixel.owner = player.id;
+                totalPrice += oldPrice;
 
-                    pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
-                    require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
-                }
+                pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
+                require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
             }
         }
-
-        require(totalPrice > 0, "UNCHANGED_PIXEL_COLORS");
 
         uint16 updatedPixelCount = uint16(params.length);
         (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);

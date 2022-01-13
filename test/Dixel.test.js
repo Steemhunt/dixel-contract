@@ -302,6 +302,13 @@ contract("Dixel", function(accounts) {
         });
       }); // Update again - carol
     }); // Update again - bob
+
+    it("should revert with INVALID_PIXEL_PARAMS", async function() {
+      await expectRevert(
+          this.dixel.updatePixels([[3, 3, 255], [2, 3, 255]], 3, { from: alice }),
+         'INVALID_PIXEL_PARAMS'
+      );
+    });
   });
 
   describe("generate SVG", function() {

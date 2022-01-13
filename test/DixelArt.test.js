@@ -1,4 +1,4 @@
-const { ether, BN, constants, expectEvent } = require("@openzeppelin/test-helpers");
+const { ether, BN, constants, expectEvent, expectRevert } = require("@openzeppelin/test-helpers");
 const { MAX_UINT256 } = constants;
 const { expect } = require("chai");
 const fs = require("fs");
@@ -132,6 +132,13 @@ contract("DixelArt", function(accounts) {
 
       it("should leave nextTokenId to the same", async function() {
         expect(await this.nft.nextTokenId()).to.be.bignumber.equal("1");
+      });
+
+      it("should revert with ERC721Burnable: token has already been burned if trying to burning twice", async function() {
+        await expectRevert(
+            this.nft.burn(0, { from: alice }),
+            'ERC721Burnable: token has already been burned'
+        );
       });
     }); // burn
   }); // generate NFT

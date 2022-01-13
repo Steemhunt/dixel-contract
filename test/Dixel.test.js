@@ -61,6 +61,13 @@ contract("Dixel", function(accounts) {
       expect(this.pixel2.color).to.be.bignumber.equal("65280");
     });
 
+    it("should revert with UNCHANGED_PIXEL_COLOR if no colors are changed", async function() {
+      await expectRevert(
+          this.dixel.updatePixels([[1, 1, 16711680]], 1, { from: alice }),
+         'UNCHANGED_PIXEL_COLORS'
+      );
+    });
+
     it("should revert with INVALID_PIXEL_PARAMS if params are not sorted", async function() {
       await expectRevert(
           this.dixel.updatePixels([[3, 3, 255], [2, 3, 255]], 1, { from: alice }),

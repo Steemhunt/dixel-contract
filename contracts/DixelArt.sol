@@ -13,7 +13,6 @@ import "./lib/ColorUtils.sol";
 import "./DixelSVGGenerator.sol";
 import "./IPixelParams.sol";
 
-
 /**
  * @dev DixelArt NFT token, including:
  *
@@ -40,7 +39,6 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
     }
     mapping(uint256 => mapping(uint256 => PixelSnapshot[])) public colorsHistory; // [x,y] -> snapshot
 
-
     event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
     // solhint-disable-next-line func-visibility
@@ -61,7 +59,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         PixelSnapshot[] storage array = colorsHistory[x][y];
         if (array.length == 0) return 0;
         if (tokenId == _tokenIdTracker.current() - 1) return array[array.length-1].color; // if latest edition - just return last color
-        if (tokenId > _tokenIdTracker.current()) return 0; // same behavior as previous implementation
+        if (tokenId > _tokenIdTracker.current() - 1) return 0; // same behavior as previous implementation
     
         uint256 low = 0;
         uint256 high = array.length;

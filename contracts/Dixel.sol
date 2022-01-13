@@ -18,10 +18,10 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
     DixelArt public dixelArt;
 
-    uint200 private constant GENESIS_PRICE = 1e18; // Initial price: 1 DIXEL
-    uint256 private constant PRICE_INCREASE_RATE = 500; // 5% price increase on over-writing
-    uint256 private constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
-    uint256 private constant MAX_RATE = 10000;
+    uint200 internal constant GENESIS_PRICE = 1e18; // Initial price: 1 DIXEL
+    uint256 internal constant PRICE_INCREASE_RATE = 500; // 5% price increase on over-writing
+    uint256 internal constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
+    uint256 internal constant MAX_RATE = 10000;
 
     struct Pixel {
         uint24 color; // 24bit integer (000000 - ffffff = 0 - 16777215)
@@ -91,7 +91,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
     }
 
-    function _getOrAddPlayer(address wallet) private returns (Player storage) {
+    function _getOrAddPlayer(address wallet) internal returns (Player storage) {
         require(playerWallets.length < 0xffffffff, "MAX_USER_REACHED");
 
         if (players[wallet].id == 0 && wallet != playerWallets[0]) {
@@ -114,14 +114,14 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint8 prevY = 0;
         unchecked {
             for (uint256 i = 0; i < params.length; i++) {
-                uint8 x = params[i].x;
-                uint8 y = params[i].y;
-                require(prevX * CANVAS_SIZE + prevY < x * CANVAS_SIZE + y, "INVALID_PIXEL_PARAMS");
+                if (i > 0) { // should not check for the first parameter
+                    require(prevX * CANVAS_SIZE + prevY < params[i].x * CANVAS_SIZE + params[i].y, "PARAMS_NOT_SORTED");
+                }
 
-                prevX = x;
-                prevY = y;
+                prevX = params[i].x;
+                prevY = params[i].y;
 
-                Pixel storage pixel = pixels[x][y];
+                Pixel storage pixel = pixels[params[i].x][params[i].y];
                 uint200 oldPrice = pixel.price;
 
                 pixel.color = params[i].color;

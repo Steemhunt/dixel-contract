@@ -31,12 +31,6 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint200 price; // GAS_SAVING
     }
 
-    struct PixelParams {
-        uint8 x;
-        uint8 y;
-        uint24 color;
-    }
-
     struct Player {
         uint32 id;
         uint32 contribution;

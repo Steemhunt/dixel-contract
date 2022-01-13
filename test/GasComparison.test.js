@@ -10,7 +10,7 @@ const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 const GENESIS_PRICE = ether("1");
 const ALICE_BALANCE = ether("100");
 
-contract("DixelMock", function(accounts) {
+contract("GasComparison", function(accounts) {
   const [ deployer, alice, bob, carol ] = accounts;
 
   beforeEach(async function() {
@@ -26,7 +26,10 @@ contract("DixelMock", function(accounts) {
   describe("update", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+
+      // TODO: prepare params for updating all 256 pixels
     });
+
 
     it("should update pixel colors", async function() {
 

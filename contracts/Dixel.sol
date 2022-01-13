@@ -103,8 +103,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     }
 
     function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
-        require(params.length > 0, "INVALID_PARAMS");
-        require(params.length <= CANVAS_SIZE * CANVAS_SIZE, "TOO_MANY_PIXELS");
+        require(params.length > 0 && params.length <= CANVAS_SIZE * CANVAS_SIZE, "INVALID_PIXEL_PARAMS");
         require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
 
         address msgSender = _msgSender();
@@ -134,33 +133,42 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
             }
         }
 
-        // 10% goes to the contributor reward pools
-        uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
-        assert(baseToken.transferFrom(msgSender, address(this), reward));
+        uint16 updatedPixelCount = uint16(params.length);
+        (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
-        // 90% goes to the NFT contract for refund on burn
-        assert(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward));
+        // Mint NFT to the user
+        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
 
-        // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
-        uint256 pendingReward = claimableReward(msgSender);
+        emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
+    }
 
-        // Update acc values before updating contributions so players don't get rewards for their own penalties
-        if (totalContribution != 0) { // The first reward will be permanently locked on the contract
-            _increaseRewardPerContribution(reward);
-        }
+    function _updatePlayerReward(Player storage player, uint256 totalPrice, uint16 updatedPixelCount) internal returns (uint96, uint96) {
+        address msgSender = playerWallets[player.id];
 
         unchecked {
-            totalContribution += params.length;
-            player.contribution += uint32(params.length);
+            // 10% goes to the contributor reward pools
+            uint96 reward = uint96((totalPrice * REWARD_RATE) / MAX_RATE);
+            assert(baseToken.transferFrom(msgSender, address(this), reward));
+
+            // 90% goes to the NFT contract for refund on burn
+            assert(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward));
+
+            // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
+            uint256 pendingReward = claimableReward(msgSender);
+
+            // Update acc values before updating contributions so players don't get rewards for their own penalties
+            if (totalContribution != 0) { // The first reward will be permanently locked on the contract
+                _increaseRewardPerContribution(reward);
+            }
+
+            totalContribution += updatedPixelCount;
+            player.contribution += updatedPixelCount;
 
             // Update debt so user can only claim reward from after this event
             player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
 
-            // Mint NFT to the user
-            dixelArt.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
+            return (reward, uint96(totalPrice - reward));
         }
-
-        emit UpdatePixels(msgSender, uint16(params.length), uint96(totalPrice), uint96(reward));
     }
 
     function totalPlayerCount() external view returns (uint256) {

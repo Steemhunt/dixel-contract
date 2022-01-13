@@ -81,10 +81,12 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         playerWallets.push(baseTokenAddress);
         players[baseTokenAddress].id = 0;
 
-        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-                // omit initial owner because default value 0 is correct
-                pixels[x][y].price = GENESIS_PRICE;
+        unchecked {
+            for (uint256 x = 0; x < CANVAS_SIZE; x++) {
+                for (uint256 y = 0; y < CANVAS_SIZE; y++) {
+                    // omit initial owner because default value 0 is correct
+                    pixels[x][y].price = GENESIS_PRICE;
+                }
             }
         }
     }
@@ -111,29 +113,33 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint256 totalPrice = 0;
         uint8 prevX = 0;
         uint8 prevY = 0;
-        for (uint256 i = 0; i < params.length; i++) {
-            uint8 x = params[i].x;
-            uint8 y = params[i].y;
-            require(prevX * CANVAS_SIZE + prevY < x * CANVAS_SIZE + y, "INVALID_PIXEL_PARAMS");
+        unchecked {
+            for (uint256 i = 0; i < params.length; i++) {
+                uint8 x = params[i].x;
+                uint8 y = params[i].y;
+                require(prevX * CANVAS_SIZE + prevY < x * CANVAS_SIZE + y, "INVALID_PIXEL_PARAMS");
 
-            prevX = x;
-            prevY = y;
+                prevX = x;
+                prevY = y;
 
-            Pixel storage pixel = pixels[x][y];
+                Pixel storage pixel = pixels[x][y];
+                uint200 oldPrice = pixel.price;
 
-            pixel.color = params[i].color;
-            pixel.owner = player.id;
-            totalPrice += pixel.price;
+                pixel.color = params[i].color;
+                pixel.owner = player.id;
+                totalPrice += oldPrice;
 
-            pixel.price = uint200(pixel.price + pixel.price * PRICE_INCREASE_RATE / MAX_RATE);
+                pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
+                require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
+            }
         }
 
         // 10% goes to the contributor reward pools
-        uint256 reward = totalPrice * REWARD_RATE / MAX_RATE;
-        require(baseToken.transferFrom(msgSender, address(this), reward), "REWARD_TRANSFER_FAILED");
+        uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
+        assert(baseToken.transferFrom(msgSender, address(this), reward));
 
         // 90% goes to the NFT contract for refund on burn
-        require(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward), "RESERVE_TRANSFER_FAILED");
+        assert(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward));
 
         // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
         uint256 pendingReward = claimableReward(msgSender);
@@ -143,14 +149,16 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
             _increaseRewardPerContribution(reward);
         }
 
-        totalContribution += params.length;
-        player.contribution += uint32(params.length);
+        unchecked {
+            totalContribution += params.length;
+            player.contribution += uint32(params.length);
 
-        // Update debt so user can only claim reward from after this event
-        player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
+            // Update debt so user can only claim reward from after this event
+            player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
 
-        // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
+            // Mint NFT to the user
+            dixelArt.mint(msgSender, getPixelColors(), uint16(params.length), uint96(totalPrice - reward));
+        }
 
         emit UpdatePixels(msgSender, uint16(params.length), uint96(totalPrice), uint96(reward));
     }
@@ -162,11 +170,13 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     // MARK: - Reward by contributions
 
     function _increaseRewardPerContribution(uint256 rewardAdded) private {
-        accRewardPerContribution += 1e18 * rewardAdded / totalContribution;
+        unchecked {
+            accRewardPerContribution += (1e18 * rewardAdded) / totalContribution;
+        }
     }
 
     function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
-        return accRewardPerContribution * playerContribution / 1e18;
+        return (accRewardPerContribution * playerContribution) / 1e18;
     }
 
     function claimableReward(address wallet) public view returns (uint256) {
@@ -175,15 +185,16 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
     function claimReward() external {
         address msgSender = _msgSender();
-
         uint256 amount = claimableReward(msgSender);
         require(amount > 0, "NOTHING_TO_CLAIM");
 
         Player storage player = players[msgSender];
-        player.rewardClaimed += uint192(amount);
+        unchecked {
+            player.rewardClaimed += uint192(amount);
+        }
         player.rewardDebt = _totalPlayerRewardSoFar(player.contribution); // claimable becomes 0
 
-        require(baseToken.transfer(msgSender, amount), "REWARD_TRANSFER_FAILED");
+        assert(baseToken.transfer(msgSender, amount));
 
         emit ClaimReward(msgSender, amount);
     }

@@ -4,9 +4,9 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "base64-sol/base64.sol";
 import "./lib/ColorUtils.sol";
@@ -19,12 +19,7 @@ import "./DixelSVGGenerator.sol";
  *  - a owner (Dixel contract) that allows for token minting (creation)
  *  - token ID and URI autogeneration
  */
-contract DixelArt is
-    Context,
-    ERC721,
-    ERC721Enumerable,
-    Ownable,
-    DixelSVGGenerator {
+contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerator {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdTracker;
 
@@ -96,7 +91,6 @@ contract DixelArt is
 
     function burn(uint256 tokenId) external {
         address msgSender = _msgSender();
-
         // This will also check `_exists(tokenId)`
         require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");
 
@@ -104,7 +98,7 @@ contract DixelArt is
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), "REFUND_FAILED");
+        assert(baseToken.transfer(msgSender, history[tokenId].reserveForRefund));
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }
@@ -122,20 +116,11 @@ contract DixelArt is
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override(ERC721, ERC721Enumerable) {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 }

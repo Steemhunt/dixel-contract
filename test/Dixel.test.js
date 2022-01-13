@@ -47,9 +47,9 @@ contract("Dixel", function(accounts) {
   describe("update", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
-      this.receipt = await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
+      this.receipt = await this.dixel.updatePixels([[0, 0, 16711680], [2, 0, 65280]], 0, { from: alice }); // #ff0000, #00ff00
 
-      this.pixel1 = await this.dixel.pixels(1, 1);
+      this.pixel1 = await this.dixel.pixels(0, 0);
       this.pixel2 = await this.dixel.pixels(2, 0);
       this.alicePlayer = await this.dixel.players(alice);
 
@@ -63,22 +63,22 @@ contract("Dixel", function(accounts) {
 
     it("should revert with UNCHANGED_PIXEL_COLOR if no colors are changed", async function() {
       await expectRevert(
-          this.dixel.updatePixels([[1, 1, 16711680]], 1, { from: alice }),
+          this.dixel.updatePixels([[0, 0, 16711680]], 1, { from: alice }),
          'UNCHANGED_PIXEL_COLORS'
       );
     });
 
-    it("should revert with INVALID_PIXEL_PARAMS if params are not sorted", async function() {
+    it("should revert with PARAMS_NOT_SORTED if params are not sorted", async function() {
       await expectRevert(
           this.dixel.updatePixels([[3, 3, 255], [2, 3, 255]], 1, { from: alice }),
-         'INVALID_PIXEL_PARAMS'
+         'PARAMS_NOT_SORTED'
       );
     });
 
-    it("should revert with INVALID_PIXEL_PARAMS if there is a duplicated parameter", async function() {
+    it("should revert with PARAMS_NOT_SORTED if there is a duplicated parameter", async function() {
       await expectRevert(
           this.dixel.updatePixels([[3, 3, 255], [3, 3, 255]], 1, { from: alice }),
-         'INVALID_PIXEL_PARAMS'
+         'PARAMS_NOT_SORTED'
       );
     });
 
@@ -149,9 +149,9 @@ contract("Dixel", function(accounts) {
       beforeEach(async function() {
         await this.baseToken.mint(bob, BOB_BALANCE);
         await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: bob });
-        this.receipt2 = await this.dixel.updatePixels([[1, 1, 255]], 1, { from: bob }); // #0000ff
+        this.receipt2 = await this.dixel.updatePixels([[0, 0, 255]], 1, { from: bob }); // #0000ff
 
-        this.pixel1 = await this.dixel.pixels(1, 1);
+        this.pixel1 = await this.dixel.pixels(0, 0);
         this.bobPlayer = await this.dixel.players(bob);
 
         this.cost2 = increasedPrice(GENESIS_PRICE);
@@ -229,9 +229,9 @@ contract("Dixel", function(accounts) {
         beforeEach(async function() {
           await this.baseToken.mint(carol, CAROL_BALANCE);
           await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: carol });
-          this.receipt3 = await this.dixel.updatePixels([[1, 1, 15658734]], 2, { from: carol }); // #eeeeee
+          this.receipt3 = await this.dixel.updatePixels([[0, 0, 15658734]], 2, { from: carol }); // #eeeeee
 
-          this.pixel1 = await this.dixel.pixels(1, 1);
+          this.pixel1 = await this.dixel.pixels(0, 0);
           this.carolPlayer = await this.dixel.players(carol);
 
           this.cost3 = increasedPrice(this.cost2);

@@ -17,7 +17,7 @@ async function main() {
   console.log(`Data loaded: ${data['total_bnb_spent']} BNB + ${data['total_mint_spent']} by ${data['total_users']} users`);
 
   const DixelAirdrop = await hre.ethers.getContractFactory("DixelAirdrop");
-  const contract = await DixelAirdrop.attach('0xEA31e9d0E9FeBac647cE97B6f73315BeEDb3B446'); // TODO: Change to production
+  const contract = await DixelAirdrop.attach('0x5c1a49360b07dA6Fa37297A1F30E177FBFA7dfF1'); // TODO: Change to production
 
   const uninjectedUsers = Object.keys(data['wallet_spent']).filter(k => !data['wallet_spent'][k]['tx']);
   let batch = [];

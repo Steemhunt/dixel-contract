@@ -99,6 +99,13 @@ contract("DixelArt", function(accounts) {
       expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);
     });
 
+    it("should revert if the caller is not approved", async function() {
+      await expectRevert(
+          this.nft.burn(0, { from: bob }),
+          'CALLER_IS_NOT_APPROVED'
+      );
+    });
+
     describe("burn", function() {
       beforeEach(async function() {
         this.receipt = await this.nft.burn(0, { from: alice });
@@ -134,10 +141,10 @@ contract("DixelArt", function(accounts) {
         expect(await this.nft.nextTokenId()).to.be.bignumber.equal("1");
       });
 
-      it("should revert with ERC721Burnable: token has already been burned if trying to burning twice", async function() {
+      it("should revert if the token has already been burned", async function() {
         await expectRevert(
             this.nft.burn(0, { from: alice }),
-            'ERC721Burnable: token has already been burned'
+            'TOKEN_HAS_ALREADY_BURNED'
         );
       });
     }); // burn

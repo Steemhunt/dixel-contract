@@ -93,10 +93,10 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         address msgSender = _msgSender();
 
         // Check if token has already been burned, distinguishing it from revert due to non existing tokenId
-        require(history[tokenId].burned != true, "ERC721Burnable: token has already been burned");
+        require(history[tokenId].burned != true, "TOKEN_HAS_ALREADY_BURNED");
 
         // This will also check `_exists(tokenId)`
-        require(_isApprovedOrOwner(msgSender, tokenId), "ERC721Burnable: caller is not owner nor approved");
+        require(_isApprovedOrOwner(msgSender, tokenId), "CALLER_IS_NOT_APPROVED");
 
         _burn(tokenId);
 

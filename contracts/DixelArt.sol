@@ -56,18 +56,18 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         }
     }
 
-    // This function is copied almost verbatim from OZ's Arrays.sol.
+    // This function is based upon OZ's Arrays.sol.
     function getPixelAt(uint256 tokenId, uint256 x, uint256 y) public view returns (uint24) {
         PixelSnapshot[] storage array = colorsHistory[x][y];
         if (array.length == 0) return 0;
         if (tokenId == _tokenIdTracker.current() - 1) return array[array.length-1].color; // if latest edition - just return last color
         if (tokenId > _tokenIdTracker.current()) return 0; // same behavior as previous implementation
     
-        uint256 high = array.length;
         uint256 low = 0;
+        uint256 high = array.length;
 
         while (low < high) {
-            uint256 mid = (low & high) + (low ^ high) / 2;
+            uint256 mid = (low + high) / 2;
             if (array[mid].tokenId > tokenId) {
                 high = mid;
             } else {
@@ -75,11 +75,17 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
             }
         }
 
-        if (low > 0 && array[low-1].tokenId == tokenId) {
+        if (low > array.length-1) {
             return array[low-1].color;
-        } else {
-            return array[low].color;
         }
+        if (low > 0 && array[low-1].tokenId >= tokenId) {
+            return array[low-1].color;
+        }
+        if (low > 0 && array[low].tokenId >= tokenId) {
+            return array[low-1].color;
+        }
+
+        return array[low].color;
     }
 
     function generateSVG(uint256 tokenId) external view returns (string memory) {

@@ -60,8 +60,8 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
     function getPixelAt(uint256 tokenId, uint256 x, uint256 y) public view returns (uint24) {
         PixelSnapshot[] storage array = colorsHistory[x][y];
         if (array.length == 0) return 0;
-        if (tokenId == array[array.length-1].tokenId) return array[array.length-1].color;
-        if (tokenId > array[array.length-1].tokenId) return 0; // same behavior as previous implementation
+        if (tokenId == _tokenIdTracker.current() - 1) return array[array.length-1].color; // if latest edition - just return last color
+        if (tokenId > _tokenIdTracker.current()) return 0; // same behavior as previous implementation
     
         uint256 high = array.length;
         uint256 low = 0;

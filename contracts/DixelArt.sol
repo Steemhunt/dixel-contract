@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "base64-sol/base64.sol";
 import "./lib/ColorUtils.sol";
 import "./DixelSVGGenerator.sol";
-import "./IPixelParams.sol";
 
 /**
  * @dev DixelArt NFT token, including:
@@ -27,17 +26,12 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
     IERC20 public baseToken;
 
     struct History {
+        uint24[CANVAS_SIZE][CANVAS_SIZE] pixels;
         uint16 updatedPixelCount;
         uint96 reserveForRefund;
         bool burned;
     }
     History[] public history;
-
-    struct PixelSnapshot {
-        uint256 tokenId;
-        uint24 color;
-    }
-    mapping(uint256 => mapping(uint256 => PixelSnapshot[])) public colorsHistory; // [x,y] -> snapshot
 
     event Burn(address player, uint256 tokenId, uint96 refundAmount);
 
@@ -46,44 +40,8 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         baseToken = IERC20(baseTokenAddress);
     }
 
-    function getPixelsFor(uint256 tokenId) public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors) {
-        for (uint256 x = 0; x < CANVAS_SIZE; x++) {
-            for (uint256 y = 0; y < CANVAS_SIZE; y++) {
-                pixelColors[x][y] = getPixelAt(tokenId, x, y);
-            }
-        }
-    }
-
-    // This function is based upon OZ's Arrays.sol.
-    function getPixelAt(uint256 tokenId, uint256 x, uint256 y) public view returns (uint24) {
-        PixelSnapshot[] storage array = colorsHistory[x][y];
-        if (array.length == 0) return 0;
-        if (tokenId == _tokenIdTracker.current() - 1) return array[array.length-1].color; // if latest edition - just return last color
-        if (tokenId > _tokenIdTracker.current() - 1) return 0; // same behavior as previous implementation
-    
-        uint256 low = 0;
-        uint256 high = array.length;
-
-        while (low < high) {
-            uint256 mid = (low + high) / 2;
-            if (array[mid].tokenId > tokenId) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
-
-        if (low > array.length-1) {
-            return array[low-1].color;
-        }
-        if (low > 0 && array[low-1].tokenId >= tokenId) {
-            return array[low-1].color;
-        }
-        if (low > 0 && array[low].tokenId >= tokenId) {
-            return array[low-1].color;
-        }
-
-        return array[low].color;
+    function getPixelsFor(uint256 tokenId) public view returns (uint24[CANVAS_SIZE][CANVAS_SIZE] memory) {
+        return history[tokenId].pixels;
     }
 
     function generateSVG(uint256 tokenId) external view returns (string memory) {
@@ -120,16 +78,13 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(address to, IPixelParams.PixelParams[] calldata params, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
         uint256 tokenId = _tokenIdTracker.current();
         _mint(to, tokenId);
 
-        history.push(History(updatedPixelCount, reserveForRefund, false));
-        for (uint256 i = 0; i < params.length; i++) {
-            colorsHistory[params[i].x][params[i].y].push(PixelSnapshot(tokenId,params[i].color));
-        }
+        history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
 
         _tokenIdTracker.increment();
     }

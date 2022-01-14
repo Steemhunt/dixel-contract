@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./lib/ColorUtils.sol";
 import "./DixelSVGGenerator.sol";
 import "./DixelArt.sol";
-import "./IPixelParams.sol";
-
 
 /**
 * @title Dixel
@@ -29,6 +27,12 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         uint24 color; // 24bit integer (000000 - ffffff = 0 - 16777215)
         uint32 owner; // GAS_SAVING: player.id, max 42B users
         uint200 price; // GAS_SAVING
+    }
+
+    struct PixelParams {
+        uint8 x;
+        uint8 y;
+        uint24 color;
     }
 
     struct Player {
@@ -98,7 +102,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         return players[wallet];
     }
 
-    function updatePixels(IPixelParams.PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
+    function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
         require(params.length > 0 && params.length <= CANVAS_SIZE * CANVAS_SIZE, "INVALID_PIXEL_PARAMS");
         require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
 
@@ -135,7 +139,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, params, updatedPixelCount, reserveForRefund);
+        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
 
         emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
     }

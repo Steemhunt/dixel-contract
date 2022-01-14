@@ -56,8 +56,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         // NOTE: We don't check token existence here,
         // so burnt tokens can also outputs this result unlike tokenURI function
 
-        // generate JSON only for already minted tokens
-        require(tokenId < _tokenIdTracker.current(), "CANNOT_GENERATE_JSON_FOR_NOT_MINTED_TOKEN");
+        require(tokenId < _tokenIdTracker.current(), "TOKEN_NOT_MINTED");
 
         /* solhint-disable quotes */
         json = string(abi.encodePacked(
@@ -76,7 +75,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        require(_exists(tokenId), "TOKEN_NOT_MINTED_OR_BURNED");
 
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }

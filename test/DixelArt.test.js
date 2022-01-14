@@ -94,6 +94,15 @@ contract("DixelArt", function(accounts) {
       expect(await this.nft.generateJSON(0)).to.equal(testJSON);
     });
 
+    it("should revert tokenURI in JSON format generation if tokenId has not been minted yet", async function() {
+      const nextTokenId = await this.nft.nextTokenId();
+
+      await expectRevert(
+          this.nft.generateJSON(nextTokenId),
+          'CANNOT_GENERATE_JSON_FOR_NOT_MINTED_TOKEN'
+      );
+    });
+
     it("should outputs tokenURI correctly", async function() {
       const testJSONBase64 = fs.readFileSync(`${__dirname}/fixtures/test-json-base64.txt`, "utf8");
       expect(await this.nft.tokenURI(0)).to.equal(testJSONBase64);

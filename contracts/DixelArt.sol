@@ -56,6 +56,9 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         // NOTE: We don't check token existence here,
         // so burnt tokens can also outputs this result unlike tokenURI function
 
+        // generate JSON only for already minted tokens
+        require(tokenId < _tokenIdTracker.current(), "CANNOT_GENERATE_JSON_FOR_NOT_MINTED_TOKEN");
+
         /* solhint-disable quotes */
         json = string(abi.encodePacked(
             '{"name":"Dixel Collection #',

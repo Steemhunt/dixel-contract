@@ -462,6 +462,39 @@ contract("Dixel", function(accounts) {
               it("should revert on Carol claim", async function() {
                 await expectRevert(this.dixel.claimReward({ from: carol }), 'NOTHING_TO_CLAIM');
               });
+
+              describe("6. Carol creates another reward by overwriting pixels - Alice: 3 / Bob: 6 / Carol: 4", function() {
+                beforeEach(async function() {
+                  await this.dixel.updatePixels([[3, 0, 256], [3, 1, 256]], 5, { from: carol });
+                  this.reward6 = rewardCut(increasedPrice(GENESIS_PRICE).mul(new BN("2")));
+                });
+
+                it("alice should have prev + 3/13 of generated reward", async function() {
+                  const prev = this.reward5.div(new BN("3"));
+                  const now = prev.add(this.reward6.mul(new BN("3")).div(new BN("13")));
+                  expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal(now);
+                });
+
+                it("bob should have prev + 6/13 of generated reward", async function() {
+                  const prev = this.reward5.mul(new BN("2")).div(new BN("3"));
+                  const now = prev.add(this.reward6.mul(new BN("6")).div(new BN("13")));
+                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now);
+                });
+
+                it("carol should have 4/13 of generated reward", async function() {
+                  expect(await this.dixel.claimableReward(carol)).to.be.bignumber.equal(this.reward6.mul(new BN("4")).div(new BN("13")));
+                });
+
+                it("should only have genesis reward after everyone claimed", async function() {
+                  await this.dixel.claimReward({ from: alice });
+                  await this.dixel.claimReward({ from: bob });
+                  await this.dixel.claimReward({ from: carol });
+
+                  // Fuzzy matching due to truncation of the last digit
+                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.at.least(this.reward1);
+                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.at.most(this.reward1.add(new BN("3")));
+                });
+              }); // 6
             }); // 5
           }); // 4
         }); // 3

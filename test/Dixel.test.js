@@ -24,6 +24,13 @@ function rewardCut(bn) {
   return bn.mul(new BN("1")).div(new BN("10"));
 }
 
+async function diffAfterClaim(baseToken, dixel, player) {
+  const oldBalance = await baseToken.balanceOf(player);
+  await dixel.claimReward({ from: player });
+  const newBalance = await baseToken.balanceOf(player);
+
+  return newBalance.sub(oldBalance);
+}
 
 contract("Dixel", function(accounts) {
   const [ deployer, alice, bob, carol ] = accounts;
@@ -318,10 +325,7 @@ contract("Dixel", function(accounts) {
           });
 
           it("should emit ClaimReward event", async function() {
-            expectEvent(this.claimReceipt, "ClaimReward", {
-              player: bob,
-              rewardAmount: this.bobReward
-            });
+            expectEvent(this.claimReceipt, "ClaimReward", { player: bob, rewardAmount: this.bobReward });
           });
         });
 
@@ -330,12 +334,138 @@ contract("Dixel", function(accounts) {
         });
 
         it("should revert on carol's ClaimReward", async function() {
-          await expectRevert(
-             this.dixel.claimReward({ from: carol }),
-             'NOTHING_TO_CLAIM'
-          );
+          await expectRevert(this.dixel.claimReward({ from: carol }), 'NOTHING_TO_CLAIM');
         });
       }); // Update again - carol
     }); // Update again - bob
   }); // update
+
+
+  describe.only("reward test", function() {
+    beforeEach(async function() {
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      await this.baseToken.mint(bob, BOB_BALANCE);
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: bob });
+      await this.baseToken.mint(carol, CAROL_BALANCE);
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: carol });
+    });
+
+    describe("1. Alice creates reward at the beginning -> No one is prior to Alice, so reward is just locked on the contract forever", function() {
+      beforeEach(async function() {
+        await this.dixel.updatePixels([[0, 0, 255]], 0, { from: alice });
+        this.reward1 = rewardCut(GENESIS_PRICE);
+      });
+
+      it("alice should have 0 claimable reward", async function() {
+        expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal("0");
+      });
+
+      it("the contract has the reward as its balance", async function() {
+        expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(this.reward1);
+      });
+
+      it("should revert on Alice claim", async function() {
+        await expectRevert(this.dixel.claimReward({ from: alice }), 'NOTHING_TO_CLAIM');
+      });
+
+      describe("2. Alice creates another reward -> Alice gets all reward from her first update", function() {
+        beforeEach(async function() {
+          await this.dixel.updatePixels([[0, 1, 255], [0, 2, 255]], 1, { from: alice });
+          this.reward2 = rewardCut(GENESIS_PRICE.mul(new BN("2")));
+        });
+
+        it("alice should have all claimable reward", async function() {
+          expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal(this.reward2);
+        });
+
+        it("alice can claim all reward", async function() {
+          expect(await diffAfterClaim(this.baseToken, this.dixel, alice)).to.be.bignumber.equal(this.reward2);
+        });
+
+        describe("3. Bob creates another reward -> Alice gets all because Bob shouldn't be rewarded by his own contribution", function() {
+          beforeEach(async function() {
+            await this.dixel.updatePixels([[1, 0, 255], [1, 1, 255], [1, 2, 255]], 2, { from: bob });
+            this.reward3 = rewardCut(GENESIS_PRICE.mul(new BN("3")));
+          });
+
+          it("alice should have all claimable reward", async function() {
+            expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal(this.reward2.add(this.reward3));
+          });
+
+          it("alice can claim all reward", async function() {
+            expect(await diffAfterClaim(this.baseToken, this.dixel, alice)).to.be.bignumber.equal(this.reward2.add(this.reward3));
+          });
+
+          it("bob should have 0 claimable reward", async function() {
+            expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal("0");
+          });
+
+          it("should revert on Bob claim", async function() {
+            await expectRevert(this.dixel.claimReward({ from: bob }), 'NOTHING_TO_CLAIM');
+          });
+
+          describe("4. Bob creates another reward -> Alice contribution: 3 / Bob contribution: 3 -> Alice gets half and Bob gets half", function() {
+            beforeEach(async function() {
+              // This time, claim all alice reward so far to reset calculation
+              await this.dixel.claimReward({ from: alice });
+
+              await this.dixel.updatePixels([[2, 0, 255], [2, 1, 255], [2, 2, 255]], 3, { from: bob });
+              this.reward4 = rewardCut(GENESIS_PRICE.mul(new BN("3")));
+            });
+
+            it("alice should have the half of generated reward", async function() {
+              expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal(this.reward4.div(new BN("2")));
+            });
+
+            it("alice can claim the reward", async function() {
+              expect(await diffAfterClaim(this.baseToken, this.dixel, alice)).to.be.bignumber.equal(this.reward4.div(new BN("2")));
+            });
+
+            it("bob should have the half of generated reward", async function() {
+              expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(this.reward4.div(new BN("2")));
+            });
+
+            it("bob can claim the reward", async function() {
+              expect(await diffAfterClaim(this.baseToken, this.dixel, bob)).to.be.bignumber.equal(this.reward4.div(new BN("2")));
+            });
+
+            describe("5. Carol creates another reward -> Alice contribution: 3 / Bob contribution: 6 -> Alice gets 1/3 and Bob gets 2/3 and Carol gets nothing", function() {
+              beforeEach(async function() {
+                // This time, claim all alice reward so far to reset calculation
+                await this.dixel.claimReward({ from: alice });
+                await this.dixel.claimReward({ from: bob });
+
+                await this.dixel.updatePixels([[3, 0, 255], [3, 1, 255], [3, 2, 255], [3, 3, 255]], 4, { from: carol });
+                this.reward5 = rewardCut(GENESIS_PRICE.mul(new BN("4")));
+              });
+
+              it("alice should have 1/3 of generated reward", async function() {
+                expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal(this.reward5.div(new BN("3")));
+              });
+
+              it("alice can claim the reward", async function() {
+                expect(await diffAfterClaim(this.baseToken, this.dixel, alice)).to.be.bignumber.equal(this.reward5.div(new BN("3")));
+              });
+
+              it("bob should have the half of generated reward", async function() {
+                expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(this.reward5.mul(new BN("2")).div(new BN("3")));
+              });
+
+              it("bob can claim the reward", async function() {
+                expect(await diffAfterClaim(this.baseToken, this.dixel, bob)).to.be.bignumber.equal(this.reward5.mul(new BN("2")).div(new BN("3")));
+              });
+
+              it("carol should have 0 claimable reward", async function() {
+                expect(await this.dixel.claimableReward(carol)).to.be.bignumber.equal("0");
+              });
+
+              it("should revert on Carol claim", async function() {
+                await expectRevert(this.dixel.claimReward({ from: carol }), 'NOTHING_TO_CLAIM');
+              });
+            }); // 5
+          }); // 4
+        }); // 3
+      }); // 2
+    }); // 1
+  }); // reward test
 });

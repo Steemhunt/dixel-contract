@@ -468,4 +468,106 @@ contract("Dixel", function(accounts) {
       }); // 2
     }); // 1
   }); // reward test
+
+  // Another test case written by @assafom
+  // FIXME: refactoring required - splitting test cases
+  describe("correct calculation of rewards", function() {
+    it("handles reward accumulation correctly", async function() {
+      await this.baseToken.mint(bob, BOB_BALANCE);
+      await this.baseToken.mint(carol, CAROL_BALANCE);
+
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: bob });
+      await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: carol });
+
+      // Alice creates reward at the beginning -> No one is prior to Alice, so reward is just locked on the contract forever
+      this.receipt = await this.dixel.updatePixels([[0, 0, 1]], 0, { from: alice });
+      updatePriceCurr = GENESIS_PRICE;
+      rewardsInDixelCurr = await this.baseToken.balanceOf(this.dixel.address);
+      rewardsForAliceCurr = await this.dixel.claimableReward(alice);
+      rewardsForBobCurr = await this.dixel.claimableReward(bob);
+      rewardsForCarolCurr = await this.dixel.claimableReward(carol);
+      expect(rewardsInDixelCurr).to.be.bignumber.equal(rewardCut(updatePriceCurr)); // Genesis reward - locked
+      expect(rewardsForAliceCurr).to.be.bignumber.equal(new BN("0"));
+      expect(rewardsForBobCurr).to.be.bignumber.equal(new BN("0"));
+      expect(rewardsForCarolCurr).to.be.bignumber.equal(new BN("0"));
+      rewardsInDixelPrev = rewardsInDixelCurr;
+      rewardsForAlicePrev = rewardsForAliceCurr;
+      rewardsForBobPrev = rewardsForBobCurr;
+      rewardsForCarolPrev = rewardsForCarolCurr;
+
+      // Alice creates another reward -> Alice gets the reward from her first update
+      this.receipt = await this.dixel.updatePixels([[0, 0, 2]], 1, { from: alice });
+      updatePriceCurr = increasedPrice(updatePriceCurr);
+      rewardsInDixelCurr = await this.baseToken.balanceOf(this.dixel.address);
+      rewardsForAliceCurr = await this.dixel.claimableReward(alice);
+      rewardsForBobCurr = await this.dixel.claimableReward(bob);
+      rewardsForCarolCurr = await this.dixel.claimableReward(carol);
+      expect(rewardsInDixelCurr).to.be.bignumber.equal(
+              rewardsInDixelPrev.add(rewardCut(updatePriceCurr))); // New reward added
+      expect(rewardsForAliceCurr).to.be.bignumber.equal(
+              rewardsInDixelCurr.sub(rewardCut(GENESIS_PRICE))); // Alice gets all rewards minus genesis reward
+      expect(rewardsForBobCurr).to.be.bignumber.equal(new BN("0"));
+      expect(rewardsForCarolCurr).to.be.bignumber.equal(new BN("0"));
+      rewardsInDixelPrev = rewardsInDixelCurr;
+      rewardsForAlicePrev = rewardsForAliceCurr;
+      rewardsForBobPrev = rewardsForBobCurr;
+      rewardsForCarolPrev = rewardsForCarolCurr;
+
+      // Bob creates another reward -> Alice gets all reward because Bob shouldn't be rewarded by his own contribution
+      this.receipt = await this.dixel.updatePixels([[0, 0, 3]], 2, { from: bob });
+      updatePriceCurr = increasedPrice(updatePriceCurr);
+      rewardsInDixelCurr = await this.baseToken.balanceOf(this.dixel.address);
+      rewardsForAliceCurr = await this.dixel.claimableReward(alice);
+      rewardsForBobCurr = await this.dixel.claimableReward(bob);
+      rewardsForCarolCurr = await this.dixel.claimableReward(carol);
+      expect(rewardsInDixelCurr).to.be.bignumber.equal(
+              rewardsInDixelPrev.add(rewardCut(updatePriceCurr))); // New reward added
+      expect(rewardsForAliceCurr).to.be.bignumber.equal(
+              rewardsInDixelCurr.sub(rewardCut(GENESIS_PRICE))); // Alice gets all rewards minus genesis reward
+      expect(rewardsForBobCurr).to.be.bignumber.equal(new BN("0"));
+      expect(rewardsForCarolCurr).to.be.bignumber.equal(new BN("0"));
+      rewardsInDixelPrev = rewardsInDixelCurr;
+      rewardsForAlicePrev = rewardsForAliceCurr;
+      rewardsForBobPrev = rewardsForBobCurr;
+      rewardsForCarolPrev = rewardsForCarolCurr;
+
+      // Bob creates another reward -> So far, Alice contribution: 2 , Bob contribution: 1 -> Alice gets 2/3 , Bob gets 1/3
+      this.receipt = await this.dixel.updatePixels([[0, 0, 4]], 3, { from: bob });
+      updatePriceCurr = increasedPrice(updatePriceCurr);
+      rewardsInDixelCurr = await this.baseToken.balanceOf(this.dixel.address);
+      rewardsForAliceCurr = await this.dixel.claimableReward(alice);
+      rewardsForBobCurr = await this.dixel.claimableReward(bob);
+      rewardsForCarolCurr = await this.dixel.claimableReward(carol);
+      expect(rewardsInDixelCurr).to.be.bignumber.equal(
+              rewardsInDixelPrev.add(rewardCut(updatePriceCurr))); // New reward added
+      expect(rewardsForAliceCurr).to.be.bignumber.equal(
+              rewardsForAlicePrev.add((
+                rewardCut(updatePriceCurr).mul(new BN("2")).div(new BN("3"))))); // Alice previous rewards + 2/3 of new reward
+      expect(rewardsForBobCurr).to.be.bignumber.equal(
+              rewardCut(updatePriceCurr).mul(new BN("1")).div(new BN("3"))); // Bob gets 1/3 of new reward
+      expect(rewardsForCarolCurr).to.be.bignumber.equal(new BN("0"));
+      rewardsInDixelPrev = rewardsInDixelCurr;
+      rewardsForAlicePrev = rewardsForAliceCurr;
+      rewardsForBobPrev = rewardsForBobCurr;
+      rewardsForCarolPrev = rewardsForCarolCurr;
+
+      // Carol creates reward -> Alice contribution: 2 / Bob contribution: 2 -> Alice gets 1/2, Bob gets 1/2 , Carol gets nothing because she doesn't have any previous updates
+      this.receipt = await this.dixel.updatePixels([[0, 0, 5]], 4, { from: carol });
+      updatePriceCurr = increasedPrice(updatePriceCurr);
+      rewardsInDixelCurr = await this.baseToken.balanceOf(this.dixel.address);
+      rewardsForAliceCurr = await this.dixel.claimableReward(alice);
+      rewardsForBobCurr = await this.dixel.claimableReward(bob);
+      rewardsForCarolCurr = await this.dixel.claimableReward(carol);
+      expect(rewardsInDixelCurr).to.be.bignumber.equal(
+                rewardsInDixelPrev.add(rewardCut(updatePriceCurr)));
+      expect(rewardsForAliceCurr).to.be.bignumber.equal(
+                rewardsForAlicePrev.add((
+                  rewardCut(updatePriceCurr).mul(new BN("1")).div(new BN("2"))))); // Alice gets previous rewards + 1/2 of new reward
+      expect(rewardsForBobCurr).to.be.bignumber.equal(
+                rewardsForBobPrev.add((
+                  rewardCut(updatePriceCurr).mul(new BN("1")).div(new BN("2"))))); // Bob gets previous rewards + 1/2 of new reward
+      expect(rewardsForCarolCurr).to.be.bignumber.equal(new BN("0"));
+    });
+  });
 });

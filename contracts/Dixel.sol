@@ -144,12 +144,12 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
     }
 
-    function _updatePlayerReward(Player storage player, uint256 totalPrice, uint16 updatedPixelCount) internal returns (uint96, uint96) {
+    function _updatePlayerReward(Player storage player, uint256 totalPrice, uint256 updatedPixelCount) internal returns (uint96, uint96) {
         address msgSender = playerWallets[player.id];
 
         unchecked {
             // 10% goes to the contributor reward pools
-            uint96 reward = uint96((totalPrice * REWARD_RATE) / MAX_RATE);
+            uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
             assert(baseToken.transferFrom(msgSender, address(this), reward));
 
             // 90% goes to the NFT contract for refund on burn
@@ -158,18 +158,24 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
             // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
             uint256 pendingReward = claimableReward(msgSender);
 
+            // Calculate how much reward earned from new reward
+            uint256 playerEarned;
+
             // Update acc values before updating contributions so players don't get rewards for their own penalties
             if (totalContribution != 0) { // The first reward will be permanently locked on the contract
-                _increaseRewardPerContribution(reward);
+                accRewardPerContribution += (1e20 * reward) / totalContribution;
+
+                // If the same player already has some contribution, that should be added (= deducted from debt)
+                playerEarned = player.contribution * reward / totalContribution;
             }
 
             totalContribution += updatedPixelCount;
-            player.contribution += updatedPixelCount;
+            player.contribution += uint32(updatedPixelCount);
 
             // Update debt so user can only claim reward from after this event
-            player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward;
+            player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward - playerEarned;
 
-            return (reward, uint96(totalPrice - reward));
+            return (uint96(reward), uint96(totalPrice - reward));
         }
     }
 
@@ -179,14 +185,8 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
     // MARK: - Reward by contributions
 
-    function _increaseRewardPerContribution(uint256 rewardAdded) private {
-        unchecked {
-            accRewardPerContribution += (1e18 * rewardAdded) / totalContribution;
-        }
-    }
-
     function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
-        return (accRewardPerContribution * playerContribution) / 1e18;
+        return (accRewardPerContribution * playerContribution) / 1e20;
     }
 
     function claimableReward(address wallet) public view returns (uint256) {

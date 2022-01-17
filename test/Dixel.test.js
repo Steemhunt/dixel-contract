@@ -341,7 +341,7 @@ contract("Dixel", function(accounts) {
   }); // update
 
 
-  describe.only("reward test", function() {
+  describe("reward test", function() {
     beforeEach(async function() {
       await this.baseToken.approve(this.dixel.address, MAX_UINT256, { from: alice });
       await this.baseToken.mint(bob, BOB_BALANCE);

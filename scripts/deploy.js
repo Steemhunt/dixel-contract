@@ -15,12 +15,15 @@ async function main() {
   const testToken = await hre.ethers.getContractFactory('ERC20PresetMinterPauser');
   const token = await testToken.deploy('Test Dixel', 'TEST_DIXEL');
   await token.deployed();
-  await token.mint(deployer, '100000000000000000000000'); // 100,000 tokens
-  await token.mint('0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '10000000000000000000000'); // 10k - tester 0
-  await token.mint('0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '10000000000000000000000'); // 10k -tester 1
-  await token.mint('0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '10000000000000000000000'); // 10k -tester 2
 
   console.log(` -> Test token is deployed at ${token.address}`);
+
+  const TestTokenFaucet = await hre.ethers.getContractFactory('TestTokenFaucet');
+  const faucet = await TestTokenFaucet.deploy(token.address);
+  await faucet.deployed();
+  await token.mint(faucet.address, '1000000000000000000000000'); // 1M tokens
+
+  console.log(` -> TestTokenFaucet contract deployed at ${faucet.address}`);
 
   // MARK: - Deploy NFT contract
   const DixelArt = await hre.ethers.getContractFactory('DixelArt');
@@ -62,11 +65,13 @@ async function main() {
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
+  console.log(`- TestTokenFaucet: ${faucet.address}`);
   console.log(`- DixelAirdrop: ${airdrop.address}`);
   console.log(`- DixelArt NFT: ${nft.address}`);
   console.log(`- Dixel contract: ${dixel.address}`);
 
   console.log(`
+    npx hardhat verify --network bsctest ${faucet.address} '${token.address}'
     npx hardhat verify --network bsctest ${airdrop.address} '${token.address}'
     npx hardhat verify --network bsctest ${nft.address} '${token.address}'
     npx hardhat verify --network bsctest ${dixel.address} '${token.address}' '${nft.address}'

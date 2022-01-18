@@ -7,7 +7,7 @@ const Dixel = artifacts.require("DixelMock");
 const DixelArt = artifacts.require("DixelArt");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
-const GENESIS_PRICE = ether("1");
+const GENESIS_PRICE = ether("1").div(new BN("1000")); // 0.001 DIXEL;
 const ALICE_BALANCE = ether("100");
 
 contract("DixelArt", function(accounts) {

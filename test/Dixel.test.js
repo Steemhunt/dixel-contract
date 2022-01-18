@@ -7,7 +7,7 @@ const Dixel = artifacts.require("DixelMock");
 const DixelArt = artifacts.require("DixelArt");
 const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
-const GENESIS_PRICE = ether("1");
+const GENESIS_PRICE = ether("1").div(new BN("1000")); // 0.001 DIXEL
 const ALICE_BALANCE = ether("100");
 const BOB_BALANCE = ether("200");
 const CAROL_BALANCE = ether("300");
@@ -478,7 +478,7 @@ contract("Dixel", function(accounts) {
                 it("bob should have prev + 6/13 of generated reward", async function() {
                   const prev = this.reward5.mul(new BN("2")).div(new BN("3"));
                   const now = prev.add(this.reward6.mul(new BN("6")).div(new BN("13")));
-                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now);
+                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now.add(new BN("1"))); // adjust for a different way of calculation
                 });
 
                 it("carol should have 4/13 of generated reward", async function() {
@@ -490,9 +490,7 @@ contract("Dixel", function(accounts) {
                   await this.dixel.claimReward({ from: bob });
                   await this.dixel.claimReward({ from: carol });
 
-                  // Fuzzy matching due to truncation of the last digit
-                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.at.least(this.reward1);
-                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.at.most(this.reward1.add(new BN("3")));
+                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(this.reward1.add(new BN("2")));  // adjust for a different way of calculation
                 });
               }); // 6
             }); // 5

@@ -18,7 +18,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
     DixelArt public dixelArt;
 
-    uint200 internal constant GENESIS_PRICE = 1e18; // Initial price: 1 DIXEL
+    uint200 internal constant GENESIS_PRICE = 1e15; // Initial price: 0.001 DIXEL (~$0.005)
     uint256 internal constant PRICE_INCREASE_RATE = 500; // 5% price increase on over-writing
     uint256 internal constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
     uint256 internal constant MAX_RATE = 10000;
@@ -163,7 +163,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
 
             // Update acc values before updating contributions so players don't get rewards for their own penalties
             if (totalContribution != 0) { // The first reward will be permanently locked on the contract
-                accRewardPerContribution += (1e20 * reward) / totalContribution;
+                accRewardPerContribution += (1e21 * reward) / totalContribution; // multiply 1e21 to preserve decimals on calculation
 
                 // If the same player already has some contribution, that should be added (= deducted from debt)
                 playerEarned = player.contribution * reward / totalContribution;
@@ -186,7 +186,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     // MARK: - Reward by contributions
 
     function _totalPlayerRewardSoFar(uint32 playerContribution) private view returns (uint256) {
-        return (accRewardPerContribution * playerContribution) / 1e20;
+        return (accRewardPerContribution * playerContribution) / 1e21;
     }
 
     function claimableReward(address wallet) public view returns (uint256) {

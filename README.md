@@ -16,6 +16,12 @@ npx hardhat test
 
 ## Contracts
 
+### BSC Production
+- DIXEL token: [0xA4CB7f8c6659576F50A893C18F28765018f34E12](https://bscscan.com/token/0xA4CB7f8c6659576F50A893C18F28765018f34E12)
+- DixelAirdrop: TBA
+- DixelArt NFT: TBA
+- Dixel contract: TBA
+
 ### BSC Testnet
 - Test token: 0x99826E529808737fd74a58e332a067870a53AE01
 - DixelAirdrop: 0xB830A2668D948496965A2344DCA77695d30F9019

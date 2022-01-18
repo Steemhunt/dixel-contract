@@ -45,7 +45,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         require(!canClaim, "CANNOT_CHANGE_TOTAL_SHARE_DURING_CLAIMING");
         require(airdropCategory == 1 || airdropCategory == 2, "INVALID_CATEGORY");
 
-        assert(baseToken.transferFrom(_msgSender(), address(this), amount));
+        require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
 
         unchecked {
             if (airdropCategory == 1) {
@@ -65,7 +65,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         uint256 balance = baseToken.balanceOf(address(this));
 
         // Withdraw all leftover balance
-        assert(baseToken.transfer(_msgSender(), balance));
+        require(baseToken.transfer(_msgSender(), balance), "TOKEN_TRANSFER_FAILED");
     }
 
     function whitelist(WhiteListParams[] calldata params) external onlyOwner {
@@ -125,7 +125,7 @@ contract DixelAirdrop is Ownable, ReentrancyGuard {
         uint256 amount = claimableAmount(msgSender);
 
         userContributions[msgSender].claimed = true;
-        assert(baseToken.transfer(msgSender, amount));
+        require(baseToken.transfer(msgSender, amount), "TOKEN_TRANSFER_FAILED");
 
         emit ClaimAirdrop(msgSender, amount);
     }

@@ -131,7 +131,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
                 totalPrice += oldPrice;
 
                 pixel.price = uint200(oldPrice + oldPrice * PRICE_INCREASE_RATE / MAX_RATE);
-                require(pixel.price > oldPrice, "MAX_PRICE_REACHED");
+                assert(pixel.price > oldPrice);
             }
         }
 
@@ -150,10 +150,10 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         unchecked {
             // 10% goes to the contributor reward pools
             uint256 reward = (totalPrice * REWARD_RATE) / MAX_RATE;
-            assert(baseToken.transferFrom(msgSender, address(this), reward));
+            require(baseToken.transferFrom(msgSender, address(this), reward), "REWARD_TRANSFER_FAILED");
 
             // 90% goes to the NFT contract for refund on burn
-            assert(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward));
+            require(baseToken.transferFrom(msgSender, address(dixelArt), totalPrice - reward), "RESERVE_TRANSFER_FAILED");
 
             // Keep the pending reward, so it can be deducted from debt at the end (No auto claiming)
             uint256 pendingReward = claimableReward(msgSender);
@@ -204,7 +204,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
         }
         player.rewardDebt = _totalPlayerRewardSoFar(player.contribution); // claimable becomes 0
 
-        assert(baseToken.transfer(msgSender, amount));
+        require(baseToken.transfer(msgSender, amount), 'TOKEN_TRANSFER_FAILED');
 
         emit ClaimReward(msgSender, amount);
     }

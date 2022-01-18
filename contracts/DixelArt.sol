@@ -104,7 +104,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
 
         // Refund reserve amount
         history[tokenId].burned = true;
-        assert(baseToken.transfer(msgSender, history[tokenId].reserveForRefund));
+        require(baseToken.transfer(msgSender, history[tokenId].reserveForRefund), "REFUND_TRANSFER_FAILED");
 
         emit Burn(msgSender, tokenId, history[tokenId].reserveForRefund);
     }

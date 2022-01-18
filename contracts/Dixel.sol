@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./lib/ColorUtils.sol";
@@ -14,12 +14,12 @@ import "./DixelArt.sol";
 *
 * Crowd-sourced pixel art community
 */
-contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
+contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     IERC20 public baseToken;
     DixelArt public dixelArt;
 
     uint200 internal constant GENESIS_PRICE = 1e15; // Initial price: 0.001 DIXEL (~$0.005)
-    uint256 internal constant PRICE_INCREASE_RATE = 500; // 5% price increase on over-writing
+    uint256 internal constant PRICE_INCREASE_RATE = 200; // 2% price increase on over-writing
     uint256 internal constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
     uint256 internal constant MAX_RATE = 10000;
 
@@ -48,7 +48,7 @@ contract Dixel is Ownable, ReentrancyGuard, DixelSVGGenerator {
     // Fancy math here:
     //   - player.rewardDebt: Reward amount that should be deducted (the amount accumulated before I joined)
     //   - accRewardPerContribution: Accumulated reward per share (contribution)
-    //     (use `accRewardPerContribution * 1e18` because the value is normally less than 1 with many decimals)
+    //     (use `accRewardPerContribution * 1e21` because the value is normally less than 1 with many decimals)
 
     // Example: accRewardPerContribution =
     //   1. reward: 100 (+100) & total contribution: 100 -> 0 + 100 / 100 = 1.0

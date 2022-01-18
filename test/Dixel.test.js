@@ -13,7 +13,7 @@ const BOB_BALANCE = ether("200");
 const CAROL_BALANCE = ether("300");
 
 function increasedPrice(bn) {
-  return bn.mul(new BN("105")).div(new BN("100"));
+  return bn.mul(new BN("102")).div(new BN("100"));
 }
 
 function nftCut(bn) {
@@ -43,12 +43,6 @@ contract("Dixel", function(accounts) {
     this.nft = await DixelArt.new(this.baseToken.address);
     this.dixel = await Dixel.new(this.baseToken.address, this.nft.address);
     await this.nft.transferOwnership(this.dixel.address); // Set owner as Dixel contract, so it can mint new NFTs
-  });
-
-  describe("admin features", function() {
-    it("default owner should be the deployer", async function() {
-      expect(await this.dixel.owner()).to.equal(deployer);
-    });
   });
 
   describe("update", function() {
@@ -478,7 +472,7 @@ contract("Dixel", function(accounts) {
                 it("bob should have prev + 6/13 of generated reward", async function() {
                   const prev = this.reward5.mul(new BN("2")).div(new BN("3"));
                   const now = prev.add(this.reward6.mul(new BN("6")).div(new BN("13")));
-                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now.add(new BN("1"))); // adjust for a different way of calculation
+                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now); // adjust for a different way of calculation
                 });
 
                 it("carol should have 4/13 of generated reward", async function() {

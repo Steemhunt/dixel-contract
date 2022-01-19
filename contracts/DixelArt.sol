@@ -33,7 +33,8 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
     }
     History[] public history;
 
-    event Burn(address player, uint256 tokenId, uint96 refundAmount);
+    event Mint(address indexed player, uint256 indexed tokenId, uint16 pixelCount, uint96 totalPrice);
+    event Burn(address indexed player, uint256 indexed tokenId, uint96 refundAmount);
 
     // solhint-disable-next-line func-visibility
     constructor(address baseTokenAddress) ERC721("Dixel Collection", "dART") {
@@ -80,7 +81,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(bytes(generateJSON(tokenId)))));
     }
 
-    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund) external onlyOwner {
+    function mint(address to, uint24[CANVAS_SIZE][CANVAS_SIZE] memory pixelColors, uint16 updatedPixelCount, uint96 reserveForRefund, uint96 totalPrice) external onlyOwner {
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
         uint256 tokenId = _tokenIdTracker.current();
@@ -89,6 +90,8 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         history.push(History(pixelColors, updatedPixelCount, reserveForRefund, false));
 
         _tokenIdTracker.increment();
+
+        emit Mint(to, tokenId, updatedPixelCount, totalPrice);
     }
 
     function burn(uint256 tokenId) external {

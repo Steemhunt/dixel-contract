@@ -127,14 +127,6 @@ contract("Dixel", function(accounts) {
       expect(await this.dixel.totalPlayerCount()).to.be.bignumber.equal("1");
     });
 
-    it("should emit UpdatePixels event", async function() {
-      expectEvent(this.receipt, "UpdatePixels", {
-        player: alice,
-        pixelCount: '2',
-        totalPrice: this.cost
-      });
-    });
-
     it("should have 0 claimable reward (first reward should be permanently locked)", async function() {
       expect(await this.dixel.claimableReward(alice)).to.be.bignumber.equal("0");
     });
@@ -180,14 +172,6 @@ contract("Dixel", function(accounts) {
 
       it("should transfer 10% of DIXEL tokens to the Dixel contract for reward", async function() {
         expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(rewardCut(this.cost.add(this.cost2)));
-      });
-
-      it("should emit UpdatePixels event", async function() {
-        expectEvent(this.receipt2, "UpdatePixels", {
-          player: bob,
-          pixelCount: '1',
-          totalPrice: this.cost2
-        });
       });
 
       it("should have 2 player count", async function() {
@@ -264,14 +248,6 @@ contract("Dixel", function(accounts) {
           expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(
             rewardCut(this.cost.add(this.cost2.add(this.cost3)))
           );
-        });
-
-        it("should emit UpdatePixels event", async function() {
-          expectEvent(this.receipt3, "UpdatePixels", {
-            player: carol,
-            pixelCount: '1',
-            totalPrice: this.cost3
-          });
         });
 
         it("should have 3 player count", async function() {

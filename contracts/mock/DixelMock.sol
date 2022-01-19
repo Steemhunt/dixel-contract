@@ -47,12 +47,10 @@ contract DixelMock is Dixel {
         }
 
         uint16 updatedPixelCount = uint16(params.length);
-        (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
+        uint96 reserveForRefund = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
-
-        emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
+        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund, uint96(totalPrice));
     }
 
     function updatePixelsNoChecks(PixelParams[] calldata params, uint256 nextTokenId) external {
@@ -76,11 +74,9 @@ contract DixelMock is Dixel {
         }
 
         uint16 updatedPixelCount = uint16(params.length);
-        (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
+        uint96 reserveForRefund = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
-
-        emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
+        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund, uint96(totalPrice));
     }
 }

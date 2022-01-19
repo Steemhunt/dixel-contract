@@ -33,7 +33,7 @@ contract DixelAirdrop is Ownable {
     Total public total;
     mapping(address => Contribution) public userContributions;
 
-    event ClaimAirdrop(address user, uint256 amount);
+    event ClaimAirdrop(address indexed user, uint256 amount);
 
     // solhint-disable-next-line func-visibility
     constructor(address baseTokenAddress) {

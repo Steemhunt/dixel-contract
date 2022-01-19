@@ -69,8 +69,7 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     address[] public playerWallets;
     mapping(address => Player) public players;
 
-    event UpdatePixels(address player, uint16 pixelCount, uint96 totalPrice, uint96 rewardGenerated);
-    event ClaimReward(address player, uint256 rewardAmount);
+    event ClaimReward(address indexed player, uint256 rewardAmount);
 
     // solhint-disable-next-line func-visibility
     constructor(address baseTokenAddress, address dixelArtAddress) {
@@ -136,15 +135,15 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
         }
 
         uint16 updatedPixelCount = uint16(params.length);
-        (uint96 reward, uint96 reserveForRefund) = _updatePlayerReward(player, totalPrice, updatedPixelCount);
+
+        // DIXEL total supply is 1M, so uint96 will be enough
+        uint96 reserveForRefund = _updatePlayerReward(player, totalPrice, updatedPixelCount);
 
         // Mint NFT to the user
-        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund);
-
-        emit UpdatePixels(msgSender, updatedPixelCount, uint96(totalPrice), reward);
+        dixelArt.mint(msgSender, getPixelColors(), updatedPixelCount, reserveForRefund, uint96(totalPrice));
     }
 
-    function _updatePlayerReward(Player storage player, uint256 totalPrice, uint256 updatedPixelCount) internal returns (uint96, uint96) {
+    function _updatePlayerReward(Player storage player, uint256 totalPrice, uint256 updatedPixelCount) internal returns (uint96) {
         address msgSender = playerWallets[player.id];
 
         unchecked {
@@ -175,7 +174,7 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
             // Update debt so user can only claim reward from after this event
             player.rewardDebt = _totalPlayerRewardSoFar(player.contribution) - pendingReward - playerEarned;
 
-            return (uint96(reward), uint96(totalPrice - reward));
+            return uint96(totalPrice - reward);
         }
     }
 

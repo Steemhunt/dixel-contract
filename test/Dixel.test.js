@@ -462,6 +462,10 @@ contract("Dixel", function(accounts) {
 
                   expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(this.reward1.add(new BN("2")));  // adjust for a different way of calculation
                 });
+
+                it("should have 3 player count", async function() {
+                  expect(await this.dixel.totalPlayerCount()).to.be.bignumber.equal("3");
+                });
               }); // 6
             }); // 5
           }); // 4

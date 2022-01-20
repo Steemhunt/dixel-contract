@@ -63,7 +63,7 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
         json = string(abi.encodePacked(
             '{"name":"Dixel Collection #',
             ColorUtils.uint2str(tokenId),
-            '","description":"A single art canvas where users can overwrite price-compounded pixels to generate fully on-chain NFT via dixel.club',
+            '","description":"Dixel Club (https://dixel.club) is a draw to earn pixel art NFT platform where users can overwrite price-compounded pixels to generate fully on-chain NFTs.',
             '","updated_pixel_count":"',
             ColorUtils.uint2str(history[tokenId].updatedPixelCount),
             '","reserve_for_refund":"',

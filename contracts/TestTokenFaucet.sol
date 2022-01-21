@@ -27,12 +27,13 @@ contract TestTokenFaucet {
         return testers.length;
     }
 
-    function tokenBalance() external view returns (uint256) {
+    function tokenBalance() public view returns (uint256) {
         return baseToken.balanceOf(address(this));
     }
 
     function claim() external {
-        require(!hasClaimed(msg.sender), "ALREADY_CLAIMED");
+        require(!hasClaimed(msg.sender), "TEST_TOKEN_ALREADY_CLAIMED");
+        require(tokenBalance() >= AMOUNT, "NO_TEST_TOKENS_LEFT");
 
         testers.push(msg.sender);
         testersClaimed[msg.sender] = true;

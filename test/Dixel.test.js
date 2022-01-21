@@ -13,7 +13,7 @@ const BOB_BALANCE = ether("200");
 const CAROL_BALANCE = ether("300");
 
 function increasedPrice(bn) {
-  return bn.mul(new BN("102")).div(new BN("100"));
+  return bn.mul(new BN("1001")).div(new BN("1000"));
 }
 
 function nftCut(bn) {
@@ -448,7 +448,7 @@ contract("Dixel", function(accounts) {
                 it("bob should have prev + 6/13 of generated reward", async function() {
                   const prev = this.reward5.mul(new BN("2")).div(new BN("3"));
                   const now = prev.add(this.reward6.mul(new BN("6")).div(new BN("13")));
-                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now); // adjust for a different way of calculation
+                  expect(await this.dixel.claimableReward(bob)).to.be.bignumber.equal(now);
                 });
 
                 it("carol should have 4/13 of generated reward", async function() {
@@ -460,7 +460,7 @@ contract("Dixel", function(accounts) {
                   await this.dixel.claimReward({ from: bob });
                   await this.dixel.claimReward({ from: carol });
 
-                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(this.reward1.add(new BN("2")));  // adjust for a different way of calculation
+                  expect(await this.baseToken.balanceOf(this.dixel.address)).to.be.bignumber.equal(this.reward1.add(new BN("1")));  // adjust for a different way of calculation
                 });
 
                 it("should have 3 player count", async function() {

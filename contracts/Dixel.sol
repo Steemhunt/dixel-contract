@@ -19,7 +19,7 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     DixelArt public dixelArt;
 
     uint200 internal constant GENESIS_PRICE = 1e15; // Initial price: 0.001 DIXEL (~$0.005)
-    uint256 internal constant PRICE_INCREASE_RATE = 200; // 2% price increase on over-writing
+    uint256 internal constant PRICE_INCREASE_RATE = 10; // 0.1% price increase on over-writing
     uint256 internal constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
     uint256 internal constant MAX_RATE = 10000;
 

@@ -10,7 +10,7 @@ contract TestTokenFaucet {
     address[] testers;
     mapping(address => bool) public testersClaimed;
 
-    uint256 public constant AMOUNT = 5e20; // 500 TEST_DIXEL tokens
+    uint256 public constant AMOUNT = 2e20; // 200 TEST_DIXEL tokens
 
     event ClaimTestToken(address indexed user, uint256 amount);
 

@@ -1,3 +1,4 @@
+const { ethers } = require('hardhat');
 const { ether, BN, constants, expectEvent, expectRevert } = require("@openzeppelin/test-helpers");
 const { MAX_UINT256 } = constants;
 const { expect } = require("chai");
@@ -41,8 +42,17 @@ contract("Dixel", function(accounts) {
     await this.baseToken.mint(alice, ALICE_BALANCE);
 
     this.nft = await DixelArt.new(this.baseToken.address);
-    this.dixel = await Dixel.new(this.baseToken.address, this.nft.address);
+    this.dixel = await Dixel.new(this.baseToken.address, this.nft.address, 0);
     await this.nft.transferOwnership(this.dixel.address); // Set owner as Dixel contract, so it can mint new NFTs
+  });
+
+  it("should revert if the contract before genesis block", async function() {
+    const currentBlock = await ethers.provider.getBlockNumber();
+    const dixel2 = await Dixel.new(this.baseToken.address, this.nft.address, currentBlock + 3);
+    await expectRevert(
+        dixel2.updatePixels([[0, 0, 255]], 0, { from: alice }),
+       'NOT_STARTED_YET'
+    );
   });
 
   describe("update", function() {

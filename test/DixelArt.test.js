@@ -19,7 +19,7 @@ contract("DixelArt", function(accounts) {
     await this.baseToken.mint(alice, ALICE_BALANCE);
 
     this.nft = await DixelArt.new(this.baseToken.address);
-    this.dixel = await Dixel.new(this.baseToken.address, this.nft.address);
+    this.dixel = await Dixel.new(this.baseToken.address, this.nft.address, 0);
     await this.nft.transferOwnership(this.dixel.address); // Set owner as Dixel contract, so it can mint new NFTs
   });
 

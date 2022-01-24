@@ -22,6 +22,7 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     uint256 internal constant PRICE_INCREASE_RATE = 10; // 0.1% price increase on over-writing
     uint256 internal constant REWARD_RATE = 1000; // 10% goes to contributors & 90% goes to NFT contract for refund on burn
     uint256 internal constant MAX_RATE = 10000;
+    uint256 public genesisBlock;
 
     struct Pixel {
         uint24 color; // 24bit integer (000000 - ffffff = 0 - 16777215)
@@ -72,9 +73,10 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     event ClaimReward(address indexed player, uint256 rewardAmount);
 
     // solhint-disable-next-line func-visibility
-    constructor(address baseTokenAddress, address dixelArtAddress) {
+    constructor(address baseTokenAddress, address dixelArtAddress, uint256 _genesisBlock) {
         baseToken = IERC20(baseTokenAddress);
         dixelArt = DixelArt(dixelArtAddress);
+        genesisBlock = _genesisBlock;
 
         // players[0].id = baseTokenAddress (= token burning)
         playerWallets.push(baseTokenAddress);
@@ -102,6 +104,7 @@ contract Dixel is Context, ReentrancyGuard, DixelSVGGenerator {
     }
 
     function updatePixels(PixelParams[] calldata params, uint256 nextTokenId) external nonReentrant {
+        require(block.number >= genesisBlock, "NOT_STARTED_YET");
         require(params.length > 0 && params.length <= CANVAS_SIZE * CANVAS_SIZE, "INVALID_PIXEL_PARAMS");
         require(nextTokenId == dixelArt.nextTokenId(), "NFT_EDITION_NUMBER_MISMATCHED");
 

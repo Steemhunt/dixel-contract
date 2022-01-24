@@ -34,7 +34,7 @@ async function main() {
 
   // MARK: - Deploy contract
   const Dixel = await hre.ethers.getContractFactory('Dixel');
-  const dixel = await Dixel.deploy(token.address, nft.address);
+  const dixel = await Dixel.deploy(token.address, nft.address, 0); // TODO: Set genesis block
   await dixel.deployed();
 
   console.log(` -> Dixel contract deployed at ${dixel.address}`);

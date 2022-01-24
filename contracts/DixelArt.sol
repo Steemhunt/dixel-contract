@@ -68,7 +68,9 @@ contract DixelArt is Context, ERC721, ERC721Enumerable, Ownable, DixelSVGGenerat
             ColorUtils.uint2str(history[tokenId].updatedPixelCount),
             '","reserve_for_refund":"',
             ColorUtils.uint2str(history[tokenId].reserveForRefund),
-            '","image":"',
+            '","burned":',
+            (history[tokenId].burned ? 'true' : 'false'),
+            ',"image":"',
             generateBase64SVG(tokenId),
             '"}'
         ));

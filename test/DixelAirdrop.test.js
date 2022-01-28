@@ -1,4 +1,4 @@
-const { ether, constants, expectEvent, expectRevert } = require("@openzeppelin/test-helpers");
+const { ether, constants, expectEvent, expectRevert, time } = require("@openzeppelin/test-helpers");
 const { MAX_UINT256 } = constants;
 const { expect } = require("chai");
 
@@ -8,73 +8,46 @@ const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 contract("DixelAirdrop", function(accounts) {
   const [ deployer, alice, bob, carol, dan ] = accounts;
   const WHITELIST = [
-    [alice, ether("100"), ether("200")], // 10000 * 100 / 400 + 3000 * 200 / 800 = 3250
-    [bob, ether("300"), ether("100")], // 10000 * 300 / 400 + 3000 * 100 / 800 = 7875
-    [carol, ether("0"), ether("500")], // 0 + 3000 * 500 / 800 = 1875
+    [alice, ether("100")], // 100
+    [bob, ether("5")], // 5
+    [carol, '10000000000000000'], // 0.01
   ];
 
+  const INITIAL_BALANCE = ether("1000");
+
   beforeEach(async function() {
+    this.genesisBlock = parseInt(await time.latestBlock()) + 10;
     this.baseToken = await ERC20.new("Test Dixel", "TEST_PIXEL");
-    await this.baseToken.mint(deployer, ether("13000"));
+    this.airdrop = await DixelAirdrop.new(this.baseToken.address, this.genesisBlock);
 
-    this.airdrop = await DixelAirdrop.new(this.baseToken.address);
-
-    await this.baseToken.approve(this.airdrop.address, MAX_UINT256);
-
-    await this.airdrop.addTokens(1, ether("10000"));
-    await this.airdrop.addTokens(2, ether("3000"));
-
+    await this.baseToken.mint(this.airdrop.address, INITIAL_BALANCE);
     await this.airdrop.whitelist(WHITELIST);
   });
 
-  describe("initial state", function() {
-    beforeEach(async function() {
-      this.total = await this.airdrop.total();
-    });
-
-    it("should set correct nftTotalAmount", async function() {
-      expect(this.total.nftTotalAmount).to.be.bignumber.equal(ether("10000"));
-    });
-
-    it("should set correct mintClubTotalAmount", async function() {
-      expect(this.total.mintClubTotalAmount).to.be.bignumber.equal(ether("3000"));
-    });
-
-    it("should set correct nftTotalAmount", async function() {
-      expect(this.total.whiteListCount).to.be.bignumber.equal("3");
-    });
-
-    it("should set correct nftTotalContribution", async function() {
-      expect(this.total.nftTotalContribution).to.be.bignumber.equal(ether("400"));
-    });
-
-    it("should set correct mintClubTotalContribution", async function() {
-      expect(this.total.mintClubTotalContribution).to.be.bignumber.equal(ether("800"));
-    });
+  it("should have initial balance", async function() {
+    expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(INITIAL_BALANCE);
   });
 
-  it("should have tokens on the contract", async function() {
-    expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(ether("13000"));
+  it("alice should have correct airdrop amount", async function() {
+    expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("100"));
   });
 
-  it("alice should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("3250"));
+  it("bob should have correct airdrop amount", async function() {
+    expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("5"));
   });
 
-  it("alice should have no claimable amount because airdrop is not started yet", async function() {
-    expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
-  });
-
-  it("bob should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("7875"));
-  });
-
-  it("carol should have correct claimable amount", async function() {
-    expect(await this.airdrop.airdropAmount(carol)).to.be.bignumber.equal(ether("1875"));
+  it("carol should have correct airdrop amount", async function() {
+    expect(await this.airdrop.airdropAmount(carol)).to.be.bignumber.equal(ether("0.01"));
   });
 
   it("dan should have no claimable amount", async function() {
     expect(await this.airdrop.airdropAmount(dan)).to.be.bignumber.equal("0");
+  });
+
+  it("everyone should have 0 claimable amount", async function() {
+    expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
+    expect(await this.airdrop.claimableAmount(bob)).to.be.bignumber.equal("0");
+    expect(await this.airdrop.claimableAmount(carol)).to.be.bignumber.equal("0");
     expect(await this.airdrop.claimableAmount(dan)).to.be.bignumber.equal("0");
   });
 
@@ -86,71 +59,98 @@ contract("DixelAirdrop", function(accounts) {
     expect(await this.airdrop.hasClaimed(alice)).to.equal(false);
   });
 
+  it("should return false on isWhiteList", async function() {
+    expect(await this.airdrop.isWhiteList(dan)).to.equal(false);
+  });
+
+  it("should return false on hasClaimed", async function() {
+    expect(await this.airdrop.hasClaimed(dan)).to.equal(false);
+  });
+
   it("should prevent claim before starting", async function() {
     await expectRevert(
       this.airdrop.claim({ from: alice }),
-      'AIRDROP_HAS_NOT_STARTED_OR_FINISHED'
+      'AIRDROP_NOT_STARTED_YET'
     );
   });
 
   describe("claim", function() {
     beforeEach(async function() {
-      await this.airdrop.startAirdrop();
-      await this.airdrop.claim({ from: alice });
-    });
-
-    it("should return true on hasClaimed", async function() {
-      expect(await this.airdrop.hasClaimed(alice)).to.equal(true);
+      const latestBlock = parseInt(await time.latestBlock());
+      if (latestBlock < this.genesisBlock) {
+        // console.log(`Latest block: ${latestBlock} -> Genesis block: ${this.genesisBlock}`);
+        await time.advanceBlockTo(this.genesisBlock);
+      }
     });
 
     it("alice should have correct claimable amount", async function() {
-      expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("3250"));
-      expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
+      expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("100"));
+      expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal(ether("100"));
     });
 
-    it("should increase alice's balance", async function() {
-      expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether("3250"));
-    });
-
-    it("should decrease contract's balance", async function() {
-      expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(ether("9750"));
-    });
-
-    it("should prevent claim again", async function() {
-      await expectRevert(
-        this.airdrop.claim({ from: alice }),
-        'ALREADY_CLAIMED'
-      );
+    it("bob should have correct claimable amount", async function() {
+      expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("5"));
+      expect(await this.airdrop.claimableAmount(bob)).to.be.bignumber.equal(ether("5"));
     });
 
     it("should prevent claiming by non-whitelist users", async function() {
       await expectRevert(
         this.airdrop.claim({ from: dan }),
-        'NOT_INCLUDED_IN_THE_WHITE_LIST'
+        'NOTHING_TO_CLAIM'
       );
     });
 
-    describe("close airdrop", function() {
-      beforeEach(async function() {
-        await this.airdrop.closeAirdrop();
+    describe("after claim", function() {
+       beforeEach(async function() {
+         await this.airdrop.claim({ from: alice });
+       });
+
+      it("should return true on hasClaimed", async function() {
+        expect(await this.airdrop.hasClaimed(alice)).to.equal(true);
       });
 
-      it("should refund all left-over balance to the deployer", async function() {
-        expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(ether("0"));
-        expect(await this.baseToken.balanceOf(deployer)).to.be.bignumber.equal(ether("9750"));
+      it("alice should have correct claimable amount", async function() {
+        expect(await this.airdrop.airdropAmount(alice)).to.be.bignumber.equal(ether("100"));
+        expect(await this.airdrop.claimableAmount(alice)).to.be.bignumber.equal("0");
       });
 
-      it("bob should have correct claimable amount", async function() {
-        expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("7875"));
-        expect(await this.airdrop.claimableAmount(bob)).to.be.bignumber.equal("0");
+      it("should increase alice's balance", async function() {
+        expect(await this.baseToken.balanceOf(alice)).to.be.bignumber.equal(ether("100"));
       });
 
-      it("should revert on claim", async function() {
+      it("should decrease contract's balance", async function() {
+        expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(INITIAL_BALANCE.sub(ether("100")));
+      });
+
+      it("should prevent claim again", async function() {
         await expectRevert(
-          this.airdrop.claim({ from: bob }),
-          'AIRDROP_HAS_NOT_STARTED_OR_FINISHED'
+          this.airdrop.claim({ from: alice }),
+          'NOTHING_TO_CLAIM'
         );
       });
-    });
-  });
+
+      describe("close airdrop", function() {
+        beforeEach(async function() {
+          await this.airdrop.closeAirdrop();
+        });
+
+        it("should refund all left-over balance to the deployer", async function() {
+          expect(await this.baseToken.balanceOf(this.airdrop.address)).to.be.bignumber.equal(ether("0"));
+          expect(await this.baseToken.balanceOf(deployer)).to.be.bignumber.equal(INITIAL_BALANCE.sub(ether("100")));
+        });
+
+        it("bob should have correct claimable amount", async function() {
+          expect(await this.airdrop.airdropAmount(bob)).to.be.bignumber.equal(ether("5"));
+          expect(await this.airdrop.claimableAmount(bob)).to.be.bignumber.equal("0");
+        });
+
+        it("should revert on claim", async function() {
+          await expectRevert(
+            this.airdrop.claim({ from: bob }),
+            'AIRDROP_ALREADY_CLOSED'
+          );
+        });
+      }); // close airdrop
+    }); // after claim
+  }); // claim
 });

@@ -8,124 +8,79 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract DixelAirdrop is Ownable {
     IERC20 public baseToken;
 
-    bool public canClaim;
+    uint256 public genesisBlock;
+    bool public closed;
 
     struct WhiteListParams {
         address wallet;
-        uint224 nftContribution;
-        uint224 mintClubContribution;
+        uint80 dixelAmount; // Max 1M
     }
 
-    struct Contribution {
+    struct Claim {
         bool claimed;
-        uint224 nftContribution; // category: 1
-        uint224 mintClubContribution; // category: 2
+        uint80 dixelAmount; // Max 1M
     }
 
-    struct Total {
-        uint24 whiteListCount;
-        uint224 nftTotalAmount;
-        uint224 mintClubTotalAmount;
-        uint224 nftTotalContribution;
-        uint224 mintClubTotalContribution;
-    }
-
-    Total public total;
-    mapping(address => Contribution) public userContributions;
+    mapping(address => Claim) public userClaims;
 
     event ClaimAirdrop(address indexed user, uint256 amount);
 
     // solhint-disable-next-line func-visibility
-    constructor(address baseTokenAddress) {
+    constructor(address baseTokenAddress, uint256 _genesisBlock) {
         baseToken = IERC20(baseTokenAddress);
-    }
-
-    function addTokens(uint8 airdropCategory, uint80 amount) external onlyOwner {
-        require(!canClaim, "CANNOT_CHANGE_TOTAL_SHARE_DURING_CLAIMING");
-        require(airdropCategory == 1 || airdropCategory == 2, "INVALID_CATEGORY");
-
-        require(baseToken.transferFrom(_msgSender(), address(this), amount), "TOKEN_TRANSFER_FAILED");
-
-        unchecked {
-            if (airdropCategory == 1) {
-                total.nftTotalAmount += amount;
-            } else if (airdropCategory == 2) {
-                total.mintClubTotalAmount += amount;
-            }
-        }
-    }
-
-    function startAirdrop() external onlyOwner {
-        canClaim = true;
+        genesisBlock = _genesisBlock;
     }
 
     function closeAirdrop() external onlyOwner {
-        canClaim = false;
+        closed = true;
         uint256 balance = baseToken.balanceOf(address(this));
 
         // Withdraw all leftover balance
-        require(baseToken.transfer(_msgSender(), balance), "TOKEN_TRANSFER_FAILED");
+        require(baseToken.transfer(msg.sender, balance), "TOKEN_TRANSFER_FAILED");
     }
 
     function whitelist(WhiteListParams[] calldata params) external onlyOwner {
-        require(!canClaim, "CANNOT_ADD_WHITELIST_DURING_CLAIMING");
-
         for (uint256 i = 0; i < params.length; i++) {
-            require(userContributions[params[i].wallet].nftContribution == 0, "DUPLICATED_RECORD");
-            require(userContributions[params[i].wallet].mintClubContribution == 0, "DUPLICATED_RECORD");
+            require(userClaims[params[i].wallet].dixelAmount == 0, "DUPLICATED_RECORD");
 
-            userContributions[params[i].wallet].nftContribution = params[i].nftContribution;
-            userContributions[params[i].wallet].mintClubContribution = params[i].mintClubContribution;
-
-            unchecked {
-                total.nftTotalContribution += params[i].nftContribution;
-                total.mintClubTotalContribution += params[i].mintClubContribution;
-                total.whiteListCount += 1;
-            }
+            userClaims[params[i].wallet].dixelAmount = params[i].dixelAmount;
         }
     }
 
     // MARK: - User accessible methods
 
-    function isWhiteList(address wallet) public view returns (bool) {
-        Contribution memory c = userContributions[wallet];
-
-        return c.nftContribution > 0 || c.mintClubContribution > 0;
+    function isWhiteList(address wallet) external view returns (bool) {
+        return userClaims[wallet].dixelAmount > 0;
     }
 
-    function airdropAmount(address wallet) public view returns (uint256) {
-        Contribution memory c = userContributions[wallet];
-
-        unchecked {
-            return
-                (total.nftTotalAmount * c.nftContribution) / total.nftTotalContribution +
-                (total.mintClubTotalAmount * c.mintClubContribution) / total.mintClubTotalContribution;
-        }
+    function airdropAmount(address wallet) external view returns (uint80) {
+        return userClaims[wallet].dixelAmount;
     }
 
-    function claimableAmount(address wallet) public view returns (uint256) {
-        if (!canClaim || hasClaimed(wallet)) {
+    function hasClaimed(address wallet) external view returns (bool) {
+        return userClaims[wallet].claimed;
+    }
+
+    function claimableAmount(address wallet) public view returns (uint80) {
+        if (block.number < genesisBlock || closed || userClaims[wallet].claimed) {
             return 0;
         }
 
-        return airdropAmount(wallet);
+        return userClaims[wallet].dixelAmount;
     }
 
-    function hasClaimed(address wallet) public view returns (bool) {
-        return userContributions[wallet].claimed;
-    }
 
     function claim() external {
-        address msgSender = _msgSender();
-        require(canClaim, "AIRDROP_HAS_NOT_STARTED_OR_FINISHED");
-        require(isWhiteList(msgSender), "NOT_INCLUDED_IN_THE_WHITE_LIST");
-        require(!hasClaimed(msgSender), "ALREADY_CLAIMED");
+        require(block.number >= genesisBlock, "AIRDROP_NOT_STARTED_YET");
+        require(!closed, 'AIRDROP_ALREADY_CLOSED');
 
-        uint256 amount = claimableAmount(msgSender);
+        uint80 amount = claimableAmount(msg.sender);
 
-        userContributions[msgSender].claimed = true;
-        require(baseToken.transfer(msgSender, amount), "TOKEN_TRANSFER_FAILED");
+        require(amount > 0, 'NOTHING_TO_CLAIM');
 
-        emit ClaimAirdrop(msgSender, amount);
+        userClaims[msg.sender].claimed = true;
+        require(baseToken.transfer(msg.sender, amount), "TOKEN_TRANSFER_FAILED");
+
+        emit ClaimAirdrop(msg.sender, amount);
     }
 }

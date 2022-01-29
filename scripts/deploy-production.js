@@ -55,9 +55,9 @@ async function main() {
   console.log(`- Dixel contract: ${dixel.address}`);
 
   console.log(`
-    npx hardhat verify --network bsctest ${airdrop.address} '${dixelTokenAddress}'
-    npx hardhat verify --network bsctest ${nft.address} '${dixelTokenAddress}'
-    npx hardhat verify --network bsctest ${dixel.address} '${dixelTokenAddress}' '${nft.address}'
+    npx hardhat verify --network bscmain ${airdrop.address} '${dixelTokenAddress}' '${GENESIS_BLOCK}'
+    npx hardhat verify --network bscmain ${nft.address} '${dixelTokenAddress}'
+    npx hardhat verify --network bscmain ${dixel.address} '${dixelTokenAddress}' '${nft.address}' '${GENESIS_BLOCK}'
   `);
 };
 
@@ -69,7 +69,6 @@ main()
   });
 
 
-// npx hardhat compile && HARDHAT_NETWORK=bscmain node scripts/deploy.js
-
+// npx hardhat compile && HARDHAT_NETWORK=bscmain node scripts/deploy-production.js
 
 

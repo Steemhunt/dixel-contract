@@ -48,7 +48,7 @@ module.exports = {
     bscmain: {
       url: `https://bsc-dataseed.binance.org`,
       chainId: 56,
-      gasPrice: 6000000000, // 6 GWei
+      gasPrice: 5600000000, // 5.2 GWei
       blockGasLimit: 60000000, // 60M
       accounts: [process.env.BSC_PRIVATE_KEY]
     }

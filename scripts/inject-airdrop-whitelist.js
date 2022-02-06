@@ -17,7 +17,7 @@ async function main() {
   console.log(`Data loaded: ${data['total_bnb_spent']} BNB + ${data['total_mint_spent']} by ${data['total_users']} users`);
 
   const DixelAirdrop = await hre.ethers.getContractFactory("DixelAirdrop");
-  const contract = await DixelAirdrop.attach('0x7Fcb48b7AF75E47af89B328f99B681aCa93A7d10'); // TODO: Change to production
+  const contract = await DixelAirdrop.attach('0x0f56Bd665b1Df1eafab97D0A2393acC1dEA47a21');
 
   const uninjectedUsers = Object.keys(data['wallet_spent']).filter(k => !data['wallet_spent'][k]['whitelist_tx']);
   let batch = [];
@@ -60,4 +60,4 @@ main()
   });
 
 
-// HARDHAT_NETWORK=bsctest node scripts/inject-airdrop-whitelist.js
+// HARDHAT_NETWORK=bscmain node scripts/inject-airdrop-whitelist.js

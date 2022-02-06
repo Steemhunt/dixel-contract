@@ -18,16 +18,16 @@ npx hardhat test
 
 ### BSC Production
 - DIXEL token: [0xA4CB7f8c6659576F50A893C18F28765018f34E12](https://bscscan.com/token/0xA4CB7f8c6659576F50A893C18F28765018f34E12)
-- DixelAirdrop: TBA
-- DixelArt NFT: TBA
-- Dixel contract: TBA
+- DixelClub: [0x5d6FB69Bf26090aDc60e1567f05947c486773f57](https://bscscan.com/address/0x5d6FB69Bf26090aDc60e1567f05947c486773f57)
+- DixelArt NFT: [0x9F2659b0D2baD4C1D57819df58787cDFd391E3dF](https://bscscan.com/address/0x9F2659b0D2baD4C1D57819df58787cDFd391E3dF)
+- DixelAirdrop: [0x0f56Bd665b1Df1eafab97D0A2393acC1dEA47a21](https://bscscan.com/address/0x0f56Bd665b1Df1eafab97D0A2393acC1dEA47a21)
 
 ### BSC Testnet
 - Test token: 0x62c01AF8F8Ab997Acec06C3a71DC18594726ba24
 - TestTokenFaucet: 0x0d5B2E37FB21A784FE26fD8d89Ea3Ce8F8BDc54d
-- DixelAirdrop: 0x7Fcb48b7AF75E47af89B328f99B681aCa93A7d10
+- DixelClub: 0x3b7bd4FCcc630f025584f1F7e4874adB1f324AcE
 - DixelArt NFT: 0x46cc5a12A3F58A837475C9BFe52C0C02274C0C0c
-- Dixel contract: 0x3b7bd4FCcc630f025584f1F7e4874adB1f324AcE
+- DixelAirdrop: 0x7Fcb48b7AF75E47af89B328f99B681aCa93A7d10
 
 ## Deploy
 ```bash

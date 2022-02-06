@@ -20,6 +20,7 @@ async function main() {
   await nft.deployed();
   console.log(` -> DixelArt contract deployed at ${nft.address}`);
 
+  // const GENESIS_BLOCK = '14953381'; // Test launching: 2022-02-04 15:22 +0900
   const GENESIS_BLOCK = '15040000'; // Launching Target: 2022-02-07 15:00:48.878004 +0900
 
   // MARK: - Deploy contract
@@ -38,15 +39,6 @@ async function main() {
   console.log(` -> DixelAirdrop contract deployed at ${airdrop.address} / Genesis Block: ${GENESIS_BLOCK}`);
   console.log(`   -> TODO: Transfer DIXEL tokens to airdrop address`);
   // console.log(`   -> TODO: inject-airdrop-whitelist`);
-
-  // MARK: - Production testing
-  const WHITELIST = [
-    ['0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '10000000000000000000'], // 10 DIXEL tokens each
-    ['0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '10000000000000000000'],
-    ['0xF6B02237E1EEe17EdC0c0733182929999e5B2b79', '10000000000000000000'],
-  ];
-  await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
-
 
   console.log('---');
   console.log(`- DIXEL token: ${dixelTokenAddress}`);

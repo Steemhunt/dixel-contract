@@ -39,7 +39,7 @@ module.exports = {
       blockGasLimit: 60000000,
     },
     bsctest: {
-      url: `https://data-seed-prebsc-1-s2.binance.org:8545/`,
+      url: `https://data-seed-prebsc-1-s1.binance.org:8545/`,
       chainId: 97,
       gasPrice: 10000000000, // 10 GWei
       blockGasLimit: 60000000, // 60M

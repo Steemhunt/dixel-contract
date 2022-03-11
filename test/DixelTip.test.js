@@ -10,7 +10,7 @@ const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
 const GENESIS_PRICE = ether("1").div(new BN("1000")); // 0.001 DIXEL;
 
-contract.only("DixelTip", function(accounts) {
+contract("DixelTip", function(accounts) {
   const [ deployer, alice ] = accounts;
 
   beforeEach(async function() {
@@ -28,16 +28,36 @@ contract.only("DixelTip", function(accounts) {
     // Create #0 dixel art edition - 90% (0.0018 DIXEL) should be refundable
     await this.baseToken.approve(this.dixel.address, MAX_UINT256);
     await this.dixel.updatePixels([[1, 1, 16711680], [2, 0, 65280]], 0); // #ff0000, #00ff00
+
+    this.refundAmount = ether("1.8").div(new BN("1000"));
   });
 
   describe("initial states", function() {
     it("should have 0.0018 DIXEL reserved for refund", async function() {
       const history = await this.nft.history(0);
-      expect(history.reserveForRefund).to.be.bignumber.equal(ether("1.8").div(new BN("1000")));
+      expect(history.reserveForRefund).to.be.bignumber.equal(this.refundAmount);
     });
 
     it("should have 0.0018 DIXEL total burn value", async function() {
-      expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(ether("1.8").div(new BN("1000")));
+      expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(this.refundAmount);
+    });
+  });
+
+  describe.only("zero tip (just like) on dixel art #0", function() {
+    beforeEach(async function() {
+      await this.dixelTip.tip(0, 0);
+    });
+
+    it("should have 0 DIXEL tip amount", async function() {
+      expect(await this.dixelTip.accumulatedTipAmount(0)).to.be.bignumber.equal(new BN("0"));
+    });
+
+    it("should have 1 like count", async function() {
+      expect(await this.dixelTip.likeCount(0)).to.be.bignumber.equal(new BN("1"));
+    });
+
+    it("should have 0.0018 DIXEL total burn value", async function() {
+      expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(this.refundAmount);
     });
   });
 

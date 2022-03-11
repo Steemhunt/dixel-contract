@@ -61,10 +61,39 @@ contract DixelTip is Context {
         // so we need to check token approvals of msgSender here to prevent users from burning someone else's NFT
         require(msgSender == owner || dixelArt.isApprovedForAll(owner, msgSender), "CALLER_IS_NOT_APPROVED");
 
+        // keep this before burning for later use
+        uint96 toRefund = totalBurnValue(tokenId);
+
+        // NOTE: will refund tokens to this contract
         dixelArt.burn(tokenId);
         require(!dixelArt.exists(tokenId), "TOKEN_BURN_FAILED"); // double check
 
+        // Let's keep the data for the reference,
+        // and following the behavior that DixelArt.burn keeps `reserveForRefund` data
+        // tips[tokenId].likeCount = 0;
+        // tips[tokenId].tipAmount = 0;
+
         // Pay accumulated tips to the user in addition to "burn refund" amount
-        require(baseToken.transfer(msgSender, tips[tokenId].tipAmount), "TIP_REFUND_TRANSFER_FAILED");
+        require(baseToken.transfer(msgSender, toRefund), "TIP_REFUND_TRANSFER_FAILED");
+    }
+
+    // MARK: - Utility view functions
+
+    function likeCount(uint256 tokenId) external view returns(uint32) {
+        return tips[tokenId].likeCount;
+    }
+
+    function accumulatedTipAmount(uint256 tokenId) external view returns(uint96) {
+        return tips[tokenId].tipAmount;
+    }
+
+    function totalBurnValue(uint256 tokenId) public view returns(uint96) {
+        if (!dixelArt.exists(tokenId)) {
+            return 0;
+        }
+
+        (, uint96 reserveForRefund,) = dixelArt.history(tokenId);
+
+        return reserveForRefund + tips[tokenId].tipAmount;
     }
 }

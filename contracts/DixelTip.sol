@@ -68,8 +68,7 @@ contract DixelTip is Context {
         dixelArt.burn(tokenId);
         require(!dixelArt.exists(tokenId), "TOKEN_BURN_FAILED"); // double check
 
-        // Let's keep the data for the reference,
-        // and following the behavior that DixelArt.burn keeps `reserveForRefund` data
+        // Let's keep the data for reference, and for following the behavior that DixelArt.burn keeps `reserveForRefund` data
         // tips[tokenId].likeCount = 0;
         // tips[tokenId].tipAmount = 0;
 

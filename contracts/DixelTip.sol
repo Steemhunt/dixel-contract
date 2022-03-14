@@ -15,13 +15,8 @@ contract DixelTip is Context {
     IERC20 public baseToken;
     DixelArt public dixelArt;
 
-    struct TipCount {
-        uint32 likeCount;
-        uint96 tipAmount; // baseToken max supply = 1M
-    }
-
-    // tokenId -> TipCount
-    mapping(uint256 => TipCount) public tips;
+    // tokenId -> tipAmount
+    mapping(uint256 => uint96) public tokenTipAmount;
 
     event Tip(address indexed sender, uint256 indexed tokenId, uint96 tipAmount);
     event BurnAndRefundTips(address indexed player, uint256 indexed tokenId, uint96 tipAmount);
@@ -32,17 +27,13 @@ contract DixelTip is Context {
     }
 
     function tip(uint256 tokenId, uint96 tipAmount) external {
+        require(tipAmount > 0, "TIP_AMOUNT_MUST_BE_POSITIVE");
         require(dixelArt.exists(tokenId), "CANNOT_TIP_ON_BURNED_TOKEN");
 
         address msgSender = _msgSender();
-        unchecked {
-            tips[tokenId].likeCount += 1;
 
-            if (tipAmount > 0) {
-                require(baseToken.transferFrom(msgSender, address(this), tipAmount), "TIP_TRANSFER_FAILED");
-                tips[tokenId].tipAmount += tipAmount;
-            }
-        }
+        require(baseToken.transferFrom(msgSender, address(this), tipAmount), "TIP_TRANSFER_FAILED");
+        tokenTipAmount[tokenId] += tipAmount;
 
         emit Tip(msgSender, tokenId, tipAmount);
     }
@@ -50,7 +41,7 @@ contract DixelTip is Context {
     // NOTE: Should approve first - `dixelArt.approve(address(this), tokenId)`
     function burnAndRefundTips(uint256 tokenId) external {
         require(dixelArt.exists(tokenId), "TOKEN_HAS_ALREADY_BURNED");
-        require(tips[tokenId].tipAmount > 0, "NO_TIPS_JUST_USE_BURN_FUNCTION");
+        require(tokenTipAmount[tokenId] > 0, "NO_TIPS_JUST_USE_BURN_FUNCTION");
 
         require(dixelArt.getApproved(tokenId) == address(this), "CONTRACT_IS_NOT_APPROVED");
 
@@ -63,14 +54,11 @@ contract DixelTip is Context {
 
         // keep this before burning for later use
         uint96 toRefund = totalBurnValue(tokenId);
+        tokenTipAmount[tokenId] = 0;
 
         // NOTE: will refund tokens to this contract
         dixelArt.burn(tokenId);
         require(!dixelArt.exists(tokenId), "TOKEN_BURN_FAILED"); // double check
-
-        // Let's keep the data for reference, and for following the behavior that DixelArt.burn keeps `reserveForRefund` data
-        // tips[tokenId].likeCount = 0;
-        // tips[tokenId].tipAmount = 0;
 
         // Pay accumulated tips to the user in addition to "burn refund" amount
         require(baseToken.transfer(msgSender, toRefund), "TIP_REFUND_TRANSFER_FAILED");
@@ -78,12 +66,8 @@ contract DixelTip is Context {
 
     // MARK: - Utility view functions
 
-    function likeCount(uint256 tokenId) external view returns(uint32) {
-        return tips[tokenId].likeCount;
-    }
-
     function accumulatedTipAmount(uint256 tokenId) external view returns(uint96) {
-        return tips[tokenId].tipAmount;
+        return tokenTipAmount[tokenId];
     }
 
     function totalBurnValue(uint256 tokenId) public view returns(uint96) {
@@ -93,6 +77,6 @@ contract DixelTip is Context {
 
         (, uint96 reserveForRefund,) = dixelArt.history(tokenId);
 
-        return reserveForRefund + tips[tokenId].tipAmount;
+        return reserveForRefund + tokenTipAmount[tokenId];
     }
 }

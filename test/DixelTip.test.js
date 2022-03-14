@@ -10,7 +10,7 @@ const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
 const GENESIS_PRICE = ether("1").div(new BN("1000")); // 0.001 DIXEL;
 
-contract("DixelTip", function(accounts) {
+contract.only("DixelTip", function(accounts) {
   const [ deployer, alice ] = accounts;
 
   beforeEach(async function() {
@@ -43,22 +43,11 @@ contract("DixelTip", function(accounts) {
     });
   });
 
-  describe.only("zero tip (just like) on dixel art #0", function() {
-    beforeEach(async function() {
-      await this.dixelTip.tip(0, 0);
-    });
-
-    it("should have 0 DIXEL tip amount", async function() {
-      expect(await this.dixelTip.accumulatedTipAmount(0)).to.be.bignumber.equal(new BN("0"));
-    });
-
-    it("should have 1 like count", async function() {
-      expect(await this.dixelTip.likeCount(0)).to.be.bignumber.equal(new BN("1"));
-    });
-
-    it("should have 0.0018 DIXEL total burn value", async function() {
-      expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(this.refundAmount);
-    });
+  it("should revert on 0 DIXEL tip amount", async function() {
+    await expectRevert(
+      this.dixelTip.tip(0, 0),
+      "TIP_AMOUNT_MUST_BE_POSITIVE"
+    );
   });
 
   describe("tip on dixel art #0", function() {
@@ -68,10 +57,6 @@ contract("DixelTip", function(accounts) {
 
     it("should have 5 DIXEL tip amount", async function() {
       expect(await this.dixelTip.accumulatedTipAmount(0)).to.be.bignumber.equal(ether("5"));
-    });
-
-    it("should have 1 like count", async function() {
-      expect(await this.dixelTip.likeCount(0)).to.be.bignumber.equal(new BN("1"));
     });
 
     it("should have 5.0018 DIXEL total burn value", async function() {

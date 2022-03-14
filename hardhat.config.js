@@ -20,6 +20,7 @@ require('hardhat-gas-reporter');
 require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-web3');
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-interface-generator");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

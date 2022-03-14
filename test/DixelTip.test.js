@@ -10,7 +10,7 @@ const ERC20 = artifacts.require("ERC20PresetMinterPauser");
 
 const GENESIS_PRICE = ether("1").div(new BN("1000")); // 0.001 DIXEL;
 
-contract.only("DixelTip", function(accounts) {
+contract("DixelTip", function(accounts) {
   const [ deployer, alice ] = accounts;
 
   beforeEach(async function() {

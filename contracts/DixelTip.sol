@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./DixelArt.sol";
+import "./IDixelArt.sol";
 
 /**
 * @title DixelTip
@@ -13,7 +13,7 @@ import "./DixelArt.sol";
 */
 contract DixelTip is Context {
     IERC20 public baseToken;
-    DixelArt public dixelArt;
+    IDixelArt public dixelArt;
 
     // tokenId -> tipAmount
     mapping(uint256 => uint96) public tokenTipAmount;
@@ -23,7 +23,7 @@ contract DixelTip is Context {
 
     constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
-        dixelArt = DixelArt(dixelArtAddress);
+        dixelArt = IDixelArt(dixelArtAddress);
     }
 
     function tip(uint256 tokenId, uint96 tipAmount) external {

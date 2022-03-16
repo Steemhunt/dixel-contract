@@ -56,7 +56,7 @@ contract DixelTip is Context {
 
         // keep this before burning for later use
         uint96 toRefund = totalBurnValue(tokenId);
-        tokenTipAmount[tokenId] = 0;
+        // tokenTipAmount[tokenId] = 0; // keep this data for reference
 
         // NOTE: will refund tokens to this contract
         dixelArt.burn(tokenId);
@@ -81,10 +81,6 @@ contract DixelTip is Context {
     }
 
     function totalBurnValue(uint256 tokenId) public view returns (uint96) {
-        if (!dixelArt.exists(tokenId)) {
-            return 0;
-        }
-
         return tokenTipAmount[tokenId] + reserveFromMintingCost(tokenId);
     }
 }

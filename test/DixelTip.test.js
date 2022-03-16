@@ -87,8 +87,12 @@ contract("DixelTip", function(accounts) {
         expect(await this.baseToken.balanceOf(deployer)).to.be.bignumber.equal(this.oldBalance.add(ether("5.0018")));
       });
 
-      it("should have 0 total burn value", async function() {
-        expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(new BN(0));
+      it("should keep the total burn value for reference", async function() {
+        expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(ether("5.0018"));
+      });
+
+      it("should keep the tip amount for reference", async function() {
+        expect(await this.dixelTip.accumulatedTipAmount(0)).to.be.bignumber.equal(ether("5"));
       });
     });
 

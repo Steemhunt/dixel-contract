@@ -38,19 +38,21 @@ contract DixelTip is Context {
         emit Tip(msgSender, tokenId, tipAmount);
     }
 
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+        address owner = dixelArt.ownerOf(tokenId);
+        return (spender == owner || dixelArt.getApproved(tokenId) == spender || dixelArt.isApprovedForAll(owner, spender));
+    }
+
     // NOTE: Should approve first - `dixelArt.approve(address(this), tokenId)`
     function burnAndRefundTips(uint256 tokenId) external {
         require(dixelArt.exists(tokenId), "TOKEN_HAS_ALREADY_BURNED");
         require(tokenTipAmount[tokenId] > 0, "NO_TIPS_JUST_USE_BURN_FUNCTION");
 
-        require(dixelArt.getApproved(tokenId) == address(this), "CONTRACT_IS_NOT_APPROVED");
-
         address msgSender = _msgSender();
-        address owner = dixelArt.ownerOf(tokenId);
-
+        require(_isApprovedOrOwner(address(this), tokenId), "CONTRACT_IS_NOT_APPROVED");
         // NOTE: `dixelArt.burn` will check approvals for `address(this)` (caller = this contract)
         // so we need to check token approvals of msgSender here to prevent users from burning someone else's NFT
-        require(msgSender == owner || dixelArt.isApprovedForAll(owner, msgSender), "CALLER_IS_NOT_APPROVED");
+        require(_isApprovedOrOwner(msgSender, tokenId), "CALLER_IS_NOT_APPROVED");
 
         // keep this before burning for later use
         uint96 toRefund = totalBurnValue(tokenId);

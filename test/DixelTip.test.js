@@ -100,6 +100,13 @@ contract("DixelTip", function(accounts) {
         );
       });
 
+      it("should not revert if using setApprovalForAll", async function() {
+        await this.nft.setApprovalForAll(this.dixelTip.address, true);
+        await this.dixelTip.burnAndRefundTips(0);
+
+        expect(await this.nft.exists(0)).to.equal(false);
+      });
+
       it("should revert on someone else try to call refund", async function() {
         await this.nft.approve(this.dixelTip.address, 0); // deployer approves
 

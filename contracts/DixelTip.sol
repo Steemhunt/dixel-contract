@@ -16,7 +16,7 @@ contract DixelTip is Context {
     IDixelArt public dixelArt;
 
     // tokenId -> tipAmount
-    mapping(uint256 => uint96) public tokenTipAmount;
+    mapping(uint256 => uint96) private tokenTipAmount;
 
     event Tip(address indexed sender, uint256 indexed tokenId, uint96 tipAmount);
     event BurnAndRefundTips(address indexed player, uint256 indexed tokenId, uint96 tipAmount);
@@ -66,17 +66,23 @@ contract DixelTip is Context {
 
     // MARK: - Utility view functions
 
-    function accumulatedTipAmount(uint256 tokenId) external view returns(uint96) {
+    function accumulatedTipAmount(uint256 tokenId) external view returns (uint96) {
         return tokenTipAmount[tokenId];
     }
 
-    function totalBurnValue(uint256 tokenId) public view returns(uint96) {
+    function updatedPixelCount(uint256 tokenId) external view returns (uint16 count) {
+        (count,,) = dixelArt.history(tokenId);
+    }
+
+    function reserveFromMintingCost(uint256 tokenId) public view returns (uint96 reserve) {
+        (,reserve,) = dixelArt.history(tokenId);
+    }
+
+    function totalBurnValue(uint256 tokenId) public view returns (uint96) {
         if (!dixelArt.exists(tokenId)) {
             return 0;
         }
 
-        (, uint96 reserveForRefund,) = dixelArt.history(tokenId);
-
-        return reserveForRefund + tokenTipAmount[tokenId];
+        return tokenTipAmount[tokenId] + reserveFromMintingCost(tokenId);
     }
 }

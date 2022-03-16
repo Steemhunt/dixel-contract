@@ -38,8 +38,16 @@ contract("DixelTip", function(accounts) {
       expect(history.reserveForRefund).to.be.bignumber.equal(this.refundAmount);
     });
 
+    it("should returns the same amount on reserveFromMintingCost", async function() {
+      expect(await this.dixelTip.reserveFromMintingCost(0)).to.be.bignumber.equal(this.refundAmount);
+    });
+
     it("should have 0.0018 DIXEL total burn value", async function() {
       expect(await this.dixelTip.totalBurnValue(0)).to.be.bignumber.equal(this.refundAmount);
+    });
+
+    it("should returns 2 on updatedPixelCount", async function() {
+      expect(await this.dixelTip.updatedPixelCount(0)).to.be.bignumber.equal(new BN("2"));
     });
   });
 

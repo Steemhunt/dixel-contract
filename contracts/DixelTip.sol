@@ -38,7 +38,7 @@ contract DixelTip is Context {
         emit Tip(msgSender, tokenId, tipAmount);
     }
 
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+    function _isApprovedOrOwner(address spender, uint256 tokenId) private view returns (bool) {
         address owner = dixelArt.ownerOf(tokenId);
         return (spender == owner || dixelArt.getApproved(tokenId) == spender || dixelArt.isApprovedForAll(owner, spender));
     }
@@ -72,6 +72,12 @@ contract DixelTip is Context {
         return tokenTipAmount[tokenId];
     }
 
+    function totalBurnValue(uint256 tokenId) public view returns (uint96) {
+        return tokenTipAmount[tokenId] + reserveFromMintingCost(tokenId);
+    }
+
+    // MARK: - Proxy functions
+
     function updatedPixelCount(uint256 tokenId) external view returns (uint16 count) {
         (count,,) = dixelArt.history(tokenId);
     }
@@ -80,7 +86,7 @@ contract DixelTip is Context {
         (,reserve,) = dixelArt.history(tokenId);
     }
 
-    function totalBurnValue(uint256 tokenId) public view returns (uint96) {
-        return tokenTipAmount[tokenId] + reserveFromMintingCost(tokenId);
+    function ownerOf(uint256 tokenId) external view returns (address) {
+        return dixelArt.ownerOf(tokenId);
     }
 }

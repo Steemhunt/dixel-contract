@@ -19,7 +19,7 @@ contract DixelTip is Context {
     mapping(uint256 => uint96) private tokenTipAmount;
 
     event Tip(address indexed sender, uint256 indexed tokenId, uint96 tipAmount);
-    event BurnAndRefundTips(address indexed player, uint256 indexed tokenId, uint96 tipAmount);
+    event BurnAndRefundTips(address indexed player, uint256 indexed tokenId, uint96 tipAmount, uint96 totalBurnValue);
 
     constructor(address baseTokenAddress, address dixelArtAddress) {
         baseToken = IERC20(baseTokenAddress);
@@ -64,6 +64,8 @@ contract DixelTip is Context {
 
         // Pay accumulated tips to the user in addition to "burn refund" amount
         require(baseToken.transfer(msgSender, toRefund), "TIP_REFUND_TRANSFER_FAILED");
+
+        emit BurnAndRefundTips(msgSender, tokenId, tokenTipAmount[tokenId], toRefund);
     }
 
     // MARK: - Utility view functions

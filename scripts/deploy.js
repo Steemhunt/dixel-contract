@@ -43,34 +43,33 @@ async function main() {
   console.log(` -> DixelArt contract ownership has changed`);
 
   // MARK: - Deploy Airdrop contract
-  const DixelAirdrop = await hre.ethers.getContractFactory('DixelAirdrop');
-  const airdrop = await DixelAirdrop.deploy(token.address);
-  await airdrop.deployed();
+  // const DixelAirdrop = await hre.ethers.getContractFactory('DixelAirdrop');
+  // const airdrop = await DixelAirdrop.deploy(token.address);
+  // await airdrop.deployed();
 
-  console.log(` -> DixelAirdrop contract deployed at ${airdrop.address}`);
+  // console.log(` -> DixelAirdrop contract deployed at ${airdrop.address}`);
 
-  await token.approve(airdrop.address, "999999999999999999999999999999999999999999999999");
-  await airdrop.addTokens(1, "10000000000000000000000", { gasLimit: 100000 });
-  await airdrop.addTokens(2, "3000000000000000000000", { gasLimit: 100000 });
+  // await token.approve(airdrop.address, "999999999999999999999999999999999999999999999999");
+  // await airdrop.addTokens(1, "10000000000000000000000", { gasLimit: 100000 });
+  // await airdrop.addTokens(2, "3000000000000000000000", { gasLimit: 100000 });
 
-  console.log(` -> Airdrop tokens are added`)
+  // console.log(` -> Airdrop tokens are added`)
 
   // Add whitelist (only for testnet)
   // const WHITELIST = [
   //   ['0x32A935f79ce498aeFF77Acd2F7f35B3aAbC31a2D', '100000000000000000000', '200000000000000000000'],
   // ];
-  await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
+  // await airdrop.whitelist(WHITELIST, { gasLimit: 1000000 });
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
   console.log(`- TestTokenFaucet: ${faucet.address}`);
-  console.log(`- DixelAirdrop: ${airdrop.address}`);
+  // console.log(`- DixelAirdrop: ${airdrop.address}`);
   console.log(`- DixelArt NFT: ${nft.address}`);
   console.log(`- Dixel contract: ${dixel.address}`);
 
   console.log(`
     npx hardhat verify --network bsctest ${faucet.address} '${token.address}'
-    npx hardhat verify --network bsctest ${airdrop.address} '${token.address}'
     npx hardhat verify --network bsctest ${nft.address} '${token.address}'
     npx hardhat verify --network bsctest ${dixel.address} '${token.address}' '${nft.address}'
   `);
@@ -84,7 +83,7 @@ main()
   });
 
 
-// npx hardhat compile && HARDHAT_NETWORK=bsctest node scripts/deploy.js
+// npx hardhat compile && HARDHAT_NETWORK=klaytntest node scripts/deploy.js
 
 
 

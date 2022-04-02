@@ -52,6 +52,13 @@ module.exports = {
       gasPrice: 5600000000, // 5.2 GWei
       blockGasLimit: 60000000, // 60M
       accounts: [process.env.BSC_PRIVATE_KEY]
+    },
+    klaytntest: {
+      url: `https://kaikas.baobab.klaytn.net:8651/`,
+      chainId: 1001,
+      gasPrice: 750000000000, // 750 ston (가스비)
+      blockGasLimit: 60000000, // 60M
+      accounts: [process.env.KLAYTN_TEST_PRIVATE_KEY]
     }
   },
   gasReporter: {

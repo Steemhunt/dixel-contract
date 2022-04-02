@@ -4,8 +4,8 @@ const fs = require('fs');
 
 async function main() {
   const testToken = await hre.ethers.getContractFactory('ERC20PresetMinterPauser');
-  const contract = await testToken.attach('0x62c01AF8F8Ab997Acec06C3a71DC18594726ba24');
-  await contract.mint('0x91Ec1d18ed7a3587B87066F0Ab1a641dCBb84e9E', '1000000000000000000000000');
+  const contract = await testToken.attach('0x3F65bc9DB05d64F8355A18fB4eaCb49868C82568');
+  await contract.mint('', '10000000000000000000000');
 }
 
 main()
@@ -15,4 +15,4 @@ main()
     process.exit(1);
   });
 
-// HARDHAT_NETWORK=bsctest node scripts/add-tokens.js
+// HARDHAT_NETWORK=klaytntest node scripts/add-tokens.js

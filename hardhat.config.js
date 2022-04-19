@@ -56,9 +56,16 @@ module.exports = {
     klaytntest: {
       url: `https://kaikas.baobab.klaytn.net:8651/`,
       chainId: 1001,
-      gasPrice: 750000000000, // 750 ston (가스비)
+      gasPrice: 750000000000, // 750 ston
       blockGasLimit: 60000000, // 60M
       accounts: [process.env.KLAYTN_TEST_PRIVATE_KEY]
+    },
+    klaytnmain: {
+      url: `https://public-node-api.klaytnapi.com/v1/cypress`,
+      chainId: 8217,
+      gasPrice: 750000000000, // 750 ston
+      blockGasLimit: 60000000, // 60M
+      accounts: [process.env.KLAYTN_PRIVATE_KEY]
     }
   },
   gasReporter: {

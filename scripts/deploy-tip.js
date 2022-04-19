@@ -6,7 +6,6 @@ async function main() {
   const deployer = accounts[0].address;
   console.log(`Deploy from account: ${deployer}`);
 
-
   // Testnet
   // const DIXEL_TOKEN_CONTRACT = '0x62c01AF8F8Ab997Acec06C3a71DC18594726ba24';
   // const DIXEL_ART_CONTRACT = '0x46cc5a12A3F58A837475C9BFe52C0C02274C0C0c';

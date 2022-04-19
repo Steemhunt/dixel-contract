@@ -18,12 +18,12 @@ async function main() {
 
   console.log(` -> Test token is deployed at ${token.address}`);
 
-  const TestTokenFaucet = await hre.ethers.getContractFactory('TestTokenFaucet');
-  const faucet = await TestTokenFaucet.deploy(token.address);
-  await faucet.deployed();
-  await token.mint(faucet.address, '1000000000000000000000000'); // 1M tokens
+  // const TestTokenFaucet = await hre.ethers.getContractFactory('TestTokenFaucet');
+  // const faucet = await TestTokenFaucet.deploy(token.address);
+  // await faucet.deployed();
+  // await token.mint(faucet.address, '1000000000000000000000000'); // 1M tokens
 
-  console.log(` -> TestTokenFaucet contract deployed at ${faucet.address}`);
+  // console.log(` -> TestTokenFaucet contract deployed at ${faucet.address}`);
 
   // MARK: - Deploy NFT contract
   const DixelArt = await hre.ethers.getContractFactory('DixelArt');
@@ -63,13 +63,12 @@ async function main() {
 
   console.log('---');
   console.log(`- Test token: ${token.address}`);
-  console.log(`- TestTokenFaucet: ${faucet.address}`);
+  // console.log(`- TestTokenFaucet: ${faucet.address}`);
   // console.log(`- DixelAirdrop: ${airdrop.address}`);
   console.log(`- DixelArt NFT: ${nft.address}`);
   console.log(`- Dixel contract: ${dixel.address}`);
 
   console.log(`
-    npx hardhat verify --network bsctest ${faucet.address} '${token.address}'
     npx hardhat verify --network bsctest ${nft.address} '${token.address}'
     npx hardhat verify --network bsctest ${dixel.address} '${token.address}' '${nft.address}'
   `);

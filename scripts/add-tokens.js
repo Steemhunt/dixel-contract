@@ -4,8 +4,8 @@ const fs = require('fs');
 
 async function main() {
   const testToken = await hre.ethers.getContractFactory('ERC20PresetMinterPauser');
-  const contract = await testToken.attach('0x3F65bc9DB05d64F8355A18fB4eaCb49868C82568');
-  await contract.mint('', '10000000000000000000000');
+  const contract = await testToken.attach('0xE8Aa938614F83Aa71B08e7f0085c71D01C3a3d77');
+  await contract.mint('0xCDC4CC4244331125D1a550Ac76e8744397c1f458', '10000000000000000000000');
 }
 
 main()
